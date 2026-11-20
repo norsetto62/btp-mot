@@ -38,15 +38,15 @@ def estrai_titoli_pagina(html_text):
             continue
         isin = isin_match.group(1)
 
-        # Prezzo ultimo contratto
+        # Prezzo ultimo contratto (se assente oggi, imposta None invece di scartare il titolo)
         ultimo_match = re.search(r"Ultimo:\s*([\d.,]+)", raw_text)
-        if not ultimo_match:
-            continue
-        price_str = ultimo_match.group(1).replace(".", "").replace(",", ".")
-        try:
-            price = float(price_str)
-        except ValueError:
-            continue
+        price = None
+        if ultimo_match:
+            price_str = ultimo_match.group(1).replace(".", "").replace(",", ".")
+            try:
+                price = float(price_str)
+            except ValueError:
+                price = None
 
         # Cedola periodica -> annua (x2 semestrale, x4 trimestrale per BTP Valore / Più)
         cedola_match = re.search(r"Cedola:\s*([\d.,]+)", raw_text)
