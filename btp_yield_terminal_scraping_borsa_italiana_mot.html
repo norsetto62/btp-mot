@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTP Yield Terminal — Analisi & Scraping MOT Borsa Italiana</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <!-- Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-500 text-slate-950 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                    <i class="fa-solid fa-landmark text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">BTP Yield Terminal</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-md">MOT Live</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Sincronizzazione Borsa Italiana, analisi rendimenti netti (12,5%) e simulatore locale</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="btnSyncBorsa" onclick="syncFromBorsaItaliana()" class="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-sm">
+                    <i id="syncIcon" class="fa-solid fa-rotate"></i>
+                    <span id="syncBtnText">Sincronizza da Borsa Italiana</span>
+                </button>
+                <button onclick="openImportModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-import text-sky-400"></i>
+                    <span>Importa HTML/CSV/JSON</span>
+                </button>
+                <button onclick="openPythonModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-brands fa-python text-amber-400 text-sm"></i>
+                    <span>Script Python</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Proxy & Sync Status Bar -->
+        <div class="bg-slate-950/80 border-t border-slate-800/80">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+                <div class="flex flex-wrap items-center gap-2">
+                    <label for="proxyInput" class="text-slate-400 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-slate-500"></i>
+                        Proxy CORS locale (opzionale):
+                    </label>
+                    <input type="text" id="proxyInput" placeholder="Es. http://localhost:8080/ (lascia vuoto per fallback automatico)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono text-slate-200 w-full sm:w-80 focus:outline-none focus:border-emerald-500">
+                    <button onclick="saveProxyConfig()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700 text-[11px] font-medium transition">
+                        Salva
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 text-slate-400">
+                    <span>Titoli attivi: <strong id="headerBondCount" class="font-mono-num text-emerald-400">0</strong></span>
+                    <span id="lastUpdateLabel" class="font-mono-num text-[11px] text-slate-500">Dataset locale pronto</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Status / Message Banner (replaces alert()) -->
+    <div id="statusBanner" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div id="statusBannerBox" class="rounded-xl px-4 py-3 text-xs sm:text-sm flex items-start justify-between gap-3 border">
+            <div class="flex items-start gap-2.5">
+                <i id="statusBannerIcon" class="fa-solid fa-circle-info mt-0.5 shrink-0"></i>
+                <div id="statusBannerText" class="leading-relaxed"></div>
+            </div>
+            <button onclick="hideStatusBanner()" class="text-current opacity-70 hover:opacity-100 p-0.5" aria-label="Chiudi avviso">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow space-y-6">
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Prezzo Medio Mercato</span>
+                    <span class="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center">
+                        <i class="fa-solid fa-tag text-sm"></i>
+                    </span>
+                </div>
+                <div class="mt-2.5 flex items-baseline gap-2">
+                    <span id="kpiAvgPrice" class="text-2xl font-extrabold font-mono-num text-white">--</span>
+                    <span class="text-xs text-slate-500">base 100</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cedola Lorda Media</span>
+                    <span class="w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-percent text-sm"></i>
+                    </span>
+                </div>
+                <div class="mt-2.5 flex items-baseline gap-2">
+                    <span id="kpiAvgCoupon" class="text-2xl font-extrabold font-mono-num text-indigo-400">--</span>
+                    <span class="text-xs text-slate-500">annua nominale</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rendimento Netto Medio</span>
+                    <span class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <i class="fa-solid fa-chart-line text-sm"></i>
+                    </span>
+                </div>
+                <div class="mt-2.5 flex items-baseline gap-2">
+                    <span id="kpiAvgNetYield" class="text-2xl font-extrabold font-mono-num text-emerald-400">--</span>
+                    <span class="text-xs text-slate-500">tassazione 12,5%</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Scadenza Massima</span>
+                    <span class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                        <i class="fa-solid fa-hourglass-end text-sm"></i>
+                    </span>
+                </div>
+                <div class="mt-2.5 flex items-baseline gap-2">
+                    <span id="kpiMaxMaturity" class="text-2xl font-extrabold font-mono-num text-amber-400">--</span>
+                    <span class="text-xs text-slate-500">vita residua max</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yield Curve Chart + Investment Simulator -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Scatter Plot -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-braille text-emerald-400"></i>
+                            Curva dei Rendimenti BTP (Vita Residua vs Rendimento Netto %)
+                        </h2>
+                        <p class="text-xs text-slate-400">Clicca su un punto per caricare il titolo nel simulatore di investimento.</p>
+                    </div>
+                    <span id="chartPointCount" class="text-xs font-mono-num bg-slate-800 text-slate-300 px-2.5 py-1 rounded-lg self-start sm:self-auto">0 punti</span>
+                </div>
+                <div class="relative h-72 sm:h-80 w-full flex-grow">
+                    <canvas id="yieldChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Investment Simulator -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-emerald-400"></i>
+                            Simulatore Investimento
+                        </h2>
+                        <span class="text-[11px] font-mono-num text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Imposta 12,5%</span>
+                    </div>
+
+                    <div id="selectedBondBox" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs space-y-1.5">
+                        <p class="text-slate-400">Seleziona un BTP dalla tabella o dal grafico per simulare i flussi.</p>
+                    </div>
+
+                    <div>
+                        <label for="simNominalInput" class="block text-xs font-semibold text-slate-300 mb-1.5">Valore Nominale (€)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold text-sm">€</span>
+                            <input type="number" id="simNominalInput" value="10000" min="1000" step="1000" oninput="runSimulation()" class="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-mono-num font-bold text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 mt-2">
+                            <button onclick="setNominal(5000)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-lg text-xs font-mono-num font-semibold border border-slate-700 transition">5k</button>
+                            <button onclick="setNominal(10000)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-lg text-xs font-mono-num font-semibold border border-slate-700 transition">10k</button>
+                            <button onclick="setNominal(50000)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-lg text-xs font-mono-num font-semibold border border-slate-700 transition">50k</button>
+                            <button onclick="setNominal(100000)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 rounded-lg text-xs font-mono-num font-semibold border border-slate-700 transition">100k</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="simBreakdown" class="mt-5 pt-4 border-t border-slate-800 space-y-2.5 text-xs hidden">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Esborso Reale:</span>
+                        <span id="simOutlay" class="font-mono-num font-bold text-white">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Cedola Netta Annua:</span>
+                        <span id="simAnnualNet" class="font-mono-num font-bold text-emerald-400">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Rendimento Netto Stimato:</span>
+                        <span id="simNetYield" class="font-mono-num font-bold text-sky-400">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Rimborso Netto Nominale:</span>
+                        <span id="simRedemption" class="font-mono-num font-semibold text-slate-200">--</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-800/80">
+                        <span class="text-slate-300 font-semibold">Guadagno Netto Totale:</span>
+                        <span id="simTotalGain" class="font-mono-num font-extrabold text-sm text-emerald-400">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Table Section -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <h2 class="text-sm sm:text-base font-bold text-white">Listino BTP Quotati (MOT)</h2>
+                    <span id="filteredCountBadge" class="text-xs font-mono-num bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full">0 titoli</span>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <select id="maturityFilter" onchange="applyFilters()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
+                        <option value="all">Tutte le scadenze</option>
+                        <option value="short">Breve termine (≤ 3 anni)</option>
+                        <option value="medium">Medio termine (3 – 7 anni)</option>
+                        <option value="long">Lungo termine (7 – 15 anni)</option>
+                        <option value="extralong">Extra lungo (&gt; 15 anni)</option>
+                    </select>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Cerca ISIN, nome o anno..." class="w-full sm:w-64 pl-8 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-slate-950/70 text-slate-400 uppercase text-[11px] font-bold tracking-wider border-b border-slate-800 select-none">
+                            <th class="py-3 px-3.5 cursor-pointer hover:text-white transition" onclick="sortBy('isin')">ISIN <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 cursor-pointer hover:text-white transition" onclick="sortBy('name')">Descrizione <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-white transition" onclick="sortBy('price')">Prezzo <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-white transition" onclick="sortBy('coupon')">Cedola Lorda <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 cursor-pointer hover:text-white transition" onclick="sortBy('maturity')">Scadenza <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-white transition" onclick="sortBy('years')">Vita (a) <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
+                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-emerald-300 text-emerald-400 transition" onclick="sortBy('netYield')">Rend. Netto <i class="fa-solid fa-sort ml-1"></i></th>
+                            <th class="py-3 px-3.5 text-center">Simula</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bondsTableBody" class="divide-y divide-slate-800/70 text-slate-200">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyTableState" class="hidden py-12 text-center px-4">
+                <i class="fa-solid fa-filter-circle-xmark text-2xl text-slate-600 mb-2"></i>
+                <p class="text-sm font-medium text-slate-300">Nessun titolo corrisponde ai filtri attivi.</p>
+                <p class="text-xs text-slate-500 mt-1">Modifica la ricerca o ripristina tutti i titoli.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-400 mt-auto">
+        <p>BTP Yield Terminal — Elaborazione locale in browser. I dati grezzi MOT sono convertiti con virgola decimale italiana e tassazione 12,5%.</p>
+    </footer>
+
+    <!-- Import Modal (HTML / CSV / JSON Paste & File Drop) -->
+    <div id="importModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-base sm:text-lg font-bold text-white">Importa Dati BTP (HTML Borsa Italiana, CSV o JSON)</h3>
+                    <p class="text-xs text-slate-400">Trascina un file o incolla il sorgente HTML della tabella MOT / JSON / CSV.</p>
+                </div>
+                <button onclick="closeImportModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div id="dropZone" onclick="document.getElementById('importFileInput').click()" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-950/70 rounded-xl p-4 text-center cursor-pointer transition">
+                <input type="file" id="importFileInput" accept=".html,.htm,.csv,.json,.txt" class="hidden" onchange="handleImportFile(event)">
+                <i class="fa-solid fa-cloud-arrow-up text-xl text-emerald-400 mb-1.5"></i>
+                <p class="text-xs sm:text-sm font-semibold text-slate-200">Clicca o trascina qui un file (.html, .csv, .json)</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Estrae ISIN, descrizione, Prezzo Ultimo, Cedola annua e Scadenza; scarta gli Strip senza prezzo.</p>
+            </div>
+
+            <!-- Paste Box -->
+            <div>
+                <label for="importRawTextarea" class="block text-xs font-semibold text-slate-300 mb-1.5">Oppure incolla qui HTML / CSV / JSON:</label>
+                <textarea id="importRawTextarea" rows="6" placeholder='Incolla qui frammenti HTML di Borsa Italiana, righe CSV oppure un array JSON come [{"isin":"IT000...","name":"Btp...","price":98.5,"coupon":3.5,"maturity":"01/03/2030"}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono-num text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+            </div>
+
+            <div id="importModalMsg" class="hidden text-xs px-3 py-2 rounded-lg"></div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                <button onclick="resetToDefaultDataset()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-2 rounded-xl text-xs font-medium border border-slate-700 transition">
+                    Ripristina Dataset Integrato
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeImportModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-semibold transition">
+                        Annulla
+                    </button>
+                    <button onclick="processPastedImport()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">
+                        Analizza e Carica
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Python Scraper Modal -->
+    <div id="pythonModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 sm:p-6 space-y-4 shadow-2xl my-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
+                        <i class="fa-brands fa-python text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white">Scraper Python Locale per Borsa Italiana (MOT)</h3>
+                        <p class="text-xs text-slate-400">Usa <code class="text-emerald-400">requests.Session()</code> e regex per estrarre l'elenco completo in JSON/CSV.</p>
+                    </div>
+                </div>
+                <button onclick="closePythonModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span class="text-slate-400">Dipendenze: <code class="text-emerald-400 font-mono-num">pip install requests beautifulsoup4</code></span>
+                <button onclick="copyPythonScript()" id="copyPythonBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Copia Script Python</span>
+                </button>
+            </div>
+
+            <pre id="pythonScriptCode" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono-num text-emerald-300 overflow-x-auto max-h-80 leading-relaxed">import json
+import re
+import time
+from bs4 import BeautifulSoup
+import requests
+
+BASE_URL = "https://www.borsaitaliana.it/borsa/obbligazioni/mot/btp/lista.html?page={}"
+
+session = requests.Session()
+session.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Referer": "https://www.borsaitaliana.it/borsa/obbligazioni/mot/btp/lista.html",
+})
+
+def parse_it_float(raw_val):
+    if not raw_val:
+        return None
+    cleaned = re.sub(r"[^\d,.-]", "", str(raw_val)).replace(".", "").replace(",", ".")
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+def extract_bonds_from_html(html_text):
+    soup = BeautifulSoup(html_text, "html.parser")
+    rows = soup.select("table tr")
+    extracted = []
+
+    for tr in rows:
+        row_text = " ".join(tr.get_text(" ", strip=True).split())
+        isin_match = re.search(r"\b(IT[0-9A-Z]{10})\b", row_text)
+        if not isin_match:
+            continue
+
+        isin = isin_match.group(1)
+        cells = [ " ".join(td.get_text(" ", strip=True).split()) for td in tr.find_all(["td", "th"]) ]
+
+        # Estrazione prezzo 'Ultimo'
+        ultimo_match = re.search(r"Ultimo[:\s]*([\d,]+)", row_text, re.IGNORECASE)
+        price = parse_it_float(ultimo_match.group(1)) if ultimo_match else None
+        if price is None:
+            for c in cells[1:]:
+                num = parse_it_float(c)
+                if num is not None and 30.0 <= num <= 160.0:
+                    price = num
+                    break
+
+        # Scarta titoli illiquidi / strip senza quotazione valida
+        if price is None or price <= 0:
+            continue
+
+        # Estrazione descrizione e scadenza
+        mat_match = re.search(r"\b(\d{2}[/.-]\d{2}[/.-]\d{4})\b", row_text)
+        maturity = mat_match.group(1).replace("-", "/").replace(".", "/") if mat_match else ""
+
+        name = cells[1] if len(cells) > 1 and cells[1] else isin
+
+        # Cedola periodica -> annua (semestrale * 2, trimestrale * 4 per BTP Valore / BTP Più)
+        cedola_match = re.search(r"Cedola[:\s]*([\d,]+)", row_text, re.IGNORECASE)
+        periodic_coupon = parse_it_float(cedola_match.group(1)) if cedola_match else 0.0
+        multiplier = 4 if re.search(r"\b(valore|piu|più)\b", name, re.IGNORECASE) else 2
+        annual_coupon = round((periodic_coupon or 0.0) * multiplier, 4)
+
+        if annual_coupon == 0.0:
+            pct_match = re.search(r"(\d+[.,]\d+|\d+)\s*%", name)
+            if pct_match:
+                annual_coupon = parse_it_float(pct_match.group(1)) or 0.0
+
+        extracted.append({
+            "isin": isin,
+            "name": name,
+            "price": price,
+            "coupon": annual_coupon,
+            "maturity": maturity,
+        })
+
+    return extracted
+
+all_bonds = {}
+for page in range(1, 16):
+    url = BASE_URL.format(page)
+    try:
+        resp = session.get(url, timeout=15)
+        resp.raise_for_status()
+    except Exception as exc:
+        print(f"[!] Errore pagina {page}: {exc}")
+        break
+
+    page_bonds = extract_bonds_from_html(resp.text)
+    if not page_bonds:
+        break
+
+    new_count = 0
+    for b in page_bonds:
+        if b["isin"] not in all_bonds:
+            all_bonds[b["isin"]] = b
+            new_count += 1
+
+    print(f"Pagina {page}: trovati {len(page_bonds)} titoli ({new_count} nuovi)")
+    if new_count == 0:
+        break
+    time.sleep(0.5)
+
+result = list(all_bonds.values())
+with open("btp_mot_borsa_italiana.json", "w", encoding="utf-8") as f:
+    json.dump(result, f, ensure_ascii=False, indent=2)
+
+print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</pre>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closePythonModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-xl text-xs font-semibold transition">
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clean embedded dataset of Italian BTPs (preloaded for immediate offline/local use)
+        const DEFAULT_BTP_DATA = [
+            {"isin": "IT0005210650", "name": "Btp Tf 1,25% Dc26 Eur", "price": 99.961, "coupon": 1.25, "maturity": "01/12/2026"},
+            {"isin": "IT0005390874", "name": "Btp Tf 0,85% Ge27 Eur", "price": 99.724, "coupon": 0.85, "maturity": "15/01/2027"},
+            {"isin": "IT0005580045", "name": "Btp Fx 2,95% Feb27 Eur", "price": 100.02, "coupon": 2.95, "maturity": "15/02/2027"},
+            {"isin": "IT0005633794", "name": "Btp Fx 2,55% Feb27 Eur", "price": 99.919, "coupon": 2.55, "maturity": "25/02/2027"},
+            {"isin": "IT0005484552", "name": "Btp Tf 1,10% Ap27 Eur", "price": 99.344, "coupon": 1.10, "maturity": "01/04/2027"},
+            {"isin": "IT0005240830", "name": "Btp Tf 2,20% Gn27 Eur", "price": 99.569, "coupon": 2.20, "maturity": "01/06/2027"},
+            {"isin": "IT0005547408", "name": "Btp Valore Gn27 Eur", "price": 100.402, "coupon": 4.00, "maturity": "13/06/2027"},
+            {"isin": "IT0005599904", "name": "Btp Fx 3,45% Jul27 Eur", "price": 100.21, "coupon": 3.45, "maturity": "15/07/2027"},
+            {"isin": "IT0005274805", "name": "Btp Tf 2,05% Ag27 Eur", "price": 99.292, "coupon": 2.05, "maturity": "01/08/2027"},
+            {"isin": "IT0005657330", "name": "Btp Fx 2,10% Aug27 Eur", "price": 99.212, "coupon": 2.10, "maturity": "26/08/2027"},
+            {"isin": "IT0005416570", "name": "Btp Tf 0,95% St27 Eur", "price": 98.305, "coupon": 0.95, "maturity": "15/09/2027"},
+            {"isin": "IT0005622128", "name": "Btp Fx 2,70% Oct27 Eur", "price": 99.54, "coupon": 2.70, "maturity": "15/10/2027"},
+            {"isin": "IT0005388175", "name": "Btp Italia Ot27 Eur", "price": 100.84, "coupon": 0.65, "maturity": "28/10/2027"},
+            {"isin": "IT0001174611", "name": "Btp-1nv27 6,5%", "price": 103.01, "coupon": 6.50, "maturity": "01/11/2027"},
+            {"isin": "IT0005500068", "name": "Btp Tf 2,65% Dc27 Eur", "price": 99.43, "coupon": 2.65, "maturity": "01/12/2027"},
+            {"isin": "IT0005323032", "name": "Btp Tf 2,00% Fb28 Eur", "price": 98.52, "coupon": 2.00, "maturity": "01/02/2028"},
+            {"isin": "IT0005521981", "name": "Btp Tf 3,40% Ap28 Eur", "price": 100.09, "coupon": 3.40, "maturity": "01/04/2028"},
+            {"isin": "IT0005641029", "name": "Btp Fx 2,65% Jun28 Eur", "price": 98.89, "coupon": 2.65, "maturity": "15/06/2028"},
+            {"isin": "IT0005445306", "name": "Btp Tf 0,50% Lg28 Eur", "price": 95.48, "coupon": 0.50, "maturity": "15/07/2028"},
+            {"isin": "IT0005548315", "name": "Btp Tf 3,80% Ag28 Eur", "price": 100.65, "coupon": 3.80, "maturity": "01/08/2028"},
+            {"isin": "IT0004889033", "name": "Btp Tf 4,75% St28 Eur", "price": 102.27, "coupon": 4.75, "maturity": "01/09/2028"},
+            {"isin": "IT0005565400", "name": "Btp Valore Sc Oct28 Eur", "price": 101.60, "coupon": 3.50, "maturity": "10/10/2028"},
+            {"isin": "IT0005340929", "name": "Btp Tf 2,80% Dc28 Eur", "price": 98.81, "coupon": 2.80, "maturity": "01/12/2028"},
+            {"isin": "IT0005660052", "name": "Btp Fx 2,35% Jan29 Eur", "price": 97.63, "coupon": 2.35, "maturity": "15/01/2029"},
+            {"isin": "IT0005566408", "name": "Btp Fx 4,10% Feb29 Eur", "price": 101.21, "coupon": 4.10, "maturity": "01/02/2029"},
+            {"isin": "IT0005467482", "name": "Btp Tf 0,45% Fb29 Eur", "price": 93.58, "coupon": 0.45, "maturity": "15/02/2029"},
+            {"isin": "IT0005495731", "name": "Btp Tf 2,80% Gn29 Eur", "price": 98.17, "coupon": 2.80, "maturity": "15/06/2029"},
+            {"isin": "IT0005365165", "name": "Btp Tf 3,00% Ag29 Eur", "price": 98.62, "coupon": 3.00, "maturity": "01/08/2029"},
+            {"isin": "IT0005611055", "name": "Btp Fx 3,00% Oct29 Eur", "price": 98.35, "coupon": 3.00, "maturity": "01/10/2029"},
+            {"isin": "IT0001278511", "name": "Btp-1nv29 5,25%", "price": 104.60, "coupon": 5.25, "maturity": "01/11/2029"},
+            {"isin": "IT0005519787", "name": "Btp Tf 3,85% Dc29 Eur", "price": 100.56, "coupon": 3.85, "maturity": "15/12/2029"},
+            {"isin": "IT0005024234", "name": "Btp Tf 3,50% Mz30 Eur", "price": 99.62, "coupon": 3.50, "maturity": "01/03/2030"},
+            {"isin": "IT0005383309", "name": "Btp Tf 1,35% Ap30 Eur", "price": 92.79, "coupon": 1.35, "maturity": "01/04/2030"},
+            {"isin": "IT0005542797", "name": "Btp Tf 3,70% Gn30 Eur", "price": 99.95, "coupon": 3.70, "maturity": "15/06/2030"},
+            {"isin": "IT0005637399", "name": "Btp Fx 2,95% Jul30 Eur", "price": 97.35, "coupon": 2.95, "maturity": "01/07/2030"},
+            {"isin": "IT0005403396", "name": "Btp Tf 0,95% Ag30 Eur", "price": 90.57, "coupon": 0.95, "maturity": "01/08/2030"},
+            {"isin": "IT0005654642", "name": "Btp Fx 2,70% Oct30 Eur", "price": 96.20, "coupon": 2.70, "maturity": "01/10/2030"},
+            {"isin": "IT0005561888", "name": "Btp Fx 4,00% Nov30 Eur", "price": 100.81, "coupon": 4.00, "maturity": "15/11/2030"},
+            {"isin": "IT0005413171", "name": "Btp Tf 1,65% Dc30 Eur", "price": 92.23, "coupon": 1.65, "maturity": "01/12/2030"},
+            {"isin": "IT0005580094", "name": "Btp Fx 3,50% Feb31 Eur", "price": 98.73, "coupon": 3.50, "maturity": "15/02/2031"},
+            {"isin": "IT0005422891", "name": "Btp Tf 0,90% Ap31 Eur", "price": 88.49, "coupon": 0.90, "maturity": "01/04/2031"},
+            {"isin": "IT0001444378", "name": "Btp-1mg31 6%", "price": 108.95, "coupon": 6.00, "maturity": "01/05/2031"},
+            {"isin": "IT0005595803", "name": "Btp Fx 3,45% Jul31 Eur", "price": 98.38, "coupon": 3.45, "maturity": "15/07/2031"},
+            {"isin": "IT0005436693", "name": "Btp Tf 0,60% Ag31 Eur", "price": 86.28, "coupon": 0.60, "maturity": "01/08/2031"},
+            {"isin": "IT0005542359", "name": "Btpgreen 4% Ot31 Eur", "price": 100.67, "coupon": 4.00, "maturity": "30/10/2031"},
+            {"isin": "IT0005619546", "name": "Btp Fx 3,15% Nov31 Eur", "price": 96.69, "coupon": 3.15, "maturity": "15/11/2031"},
+            {"isin": "IT0005449969", "name": "Btp Tf 0,95% Dc31 Eur", "price": 86.80, "coupon": 0.95, "maturity": "01/12/2031"},
+            {"isin": "IT0005094088", "name": "Btp Tf 1,65% Mz32 Eur", "price": 89.41, "coupon": 1.65, "maturity": "01/03/2032"},
+            {"isin": "IT0005466013", "name": "Btp Tf 0,95% Gn32 Eur", "price": 85.37, "coupon": 0.95, "maturity": "01/06/2032"},
+            {"isin": "IT0005647265", "name": "Btp Fx 3,25% Jul32 Eur", "price": 96.35, "coupon": 3.25, "maturity": "15/07/2032"},
+            {"isin": "IT0005668220", "name": "Btp Fx 3,25% Nov32 Eur", "price": 95.99, "coupon": 3.25, "maturity": "15/11/2032"},
+            {"isin": "IT0005494239", "name": "Btp Tf 2,50% Dc32 Eur", "price": 92.24, "coupon": 2.50, "maturity": "01/12/2032"},
+            {"isin": "IT0003256820", "name": "Btp-1fb33 5,75%", "price": 109.29, "coupon": 5.75, "maturity": "01/02/2033"},
+            {"isin": "IT0005518128", "name": "Btp Tf 4,40% Mg33 Eur", "price": 102.01, "coupon": 4.40, "maturity": "01/05/2033"},
+            {"isin": "IT0005240350", "name": "Btp Tf 2,45% St33 Eur", "price": 90.70, "coupon": 2.45, "maturity": "01/09/2033"},
+            {"isin": "IT0005544082", "name": "Btp Tf 4,35% Nv33 Eur", "price": 101.50, "coupon": 4.35, "maturity": "01/11/2033"},
+            {"isin": "IT0005560948", "name": "Btp Tf 4,20% Mz34 Eur", "price": 100.39, "coupon": 4.20, "maturity": "01/03/2034"},
+            {"isin": "IT0005584856", "name": "Btp Fx 3,85% Jul34 Eur", "price": 97.97, "coupon": 3.85, "maturity": "01/07/2034"},
+            {"isin": "IT0003535157", "name": "Btp-1ag34 5%", "price": 105.44, "coupon": 5.00, "maturity": "01/08/2034"},
+            {"isin": "IT0005607970", "name": "Btp Fx 3,85% Feb35 Eur", "price": 97.36, "coupon": 3.85, "maturity": "01/02/2035"},
+            {"isin": "IT0005358806", "name": "Btp Tf 3,35% Mz35 Eur", "price": 94.11, "coupon": 3.35, "maturity": "01/03/2035"},
+            {"isin": "IT0005508590", "name": "Btpgreen 4% Ap35 Eur", "price": 98.38, "coupon": 4.00, "maturity": "30/04/2035"},
+            {"isin": "IT0005631590", "name": "Btp Fx 3,65% Aug35 Eur", "price": 95.57, "coupon": 3.65, "maturity": "01/08/2035"},
+            {"isin": "IT0005648149", "name": "Btp Fx 3,60% Oct35 Eur", "price": 94.98, "coupon": 3.60, "maturity": "01/10/2035"},
+            {"isin": "IT0005402117", "name": "Btp Tf 1,45% Mz36 Eur", "price": 78.37, "coupon": 1.45, "maturity": "01/03/2036"},
+            {"isin": "IT0005177909", "name": "Btp Tf 2,25% St36 Eur", "price": 83.56, "coupon": 2.25, "maturity": "01/09/2036"},
+            {"isin": "IT0003934657", "name": "Btp-1fb37 4%", "price": 97.38, "coupon": 4.00, "maturity": "01/02/2037"},
+            {"isin": "IT0005433195", "name": "Btp Tf 0,95% Mz37 Eur", "price": 71.87, "coupon": 0.95, "maturity": "01/03/2037"},
+            {"isin": "IT0005596470", "name": "Btp Green Fx 4,05% Oct37 Eur", "price": 96.84, "coupon": 4.05, "maturity": "30/10/2037"},
+            {"isin": "IT0005496770", "name": "Btp Tf 3,25% Mz38 Eur", "price": 89.56, "coupon": 3.25, "maturity": "01/03/2038"},
+            {"isin": "IT0005321325", "name": "Btp Tf 2,95% St38 Eur", "price": 86.14, "coupon": 2.95, "maturity": "01/09/2038"},
+            {"isin": "IT0004286966", "name": "Btp-1ag39 5%", "price": 104.66, "coupon": 5.00, "maturity": "01/08/2039"},
+            {"isin": "IT0005377152", "name": "Btp Tf 3,10% Mz40 Eur", "price": 85.71, "coupon": 3.10, "maturity": "01/03/2040"},
+            {"isin": "IT0004532559", "name": "Btp-1st40 5%", "price": 104.45, "coupon": 5.00, "maturity": "01/09/2040"},
+            {"isin": "IT0005635583", "name": "Btp Fx 3,85% Oct40 Eur", "price": 92.24, "coupon": 3.85, "maturity": "01/10/2040"},
+            {"isin": "IT0005421703", "name": "Btp Tf 1,80% Mz41 Eur", "price": 70.80, "coupon": 1.80, "maturity": "01/03/2041"},
+            {"isin": "IT0005530032", "name": "Btp Tf 4,45% St43 Eur", "price": 96.95, "coupon": 4.45, "maturity": "01/09/2043"},
+            {"isin": "IT0004923998", "name": "Btp Tf 4,75% St44 Eur", "price": 100.53, "coupon": 4.75, "maturity": "01/09/2044"},
+            {"isin": "IT0005438004", "name": "Btpgreen 1,5% Ap45 Eur", "price": 60.54, "coupon": 1.50, "maturity": "30/04/2045"},
+            {"isin": "IT0005631608", "name": "Btp Green Fx 4,10% Apr46 Eur", "price": 91.51, "coupon": 4.10, "maturity": "30/04/2046"},
+            {"isin": "IT0005083057", "name": "Btp Tf 3,25% St46 Eur", "price": 80.50, "coupon": 3.25, "maturity": "01/09/2046"},
+            {"isin": "IT0005162828", "name": "Btp Tf 2,70% Mz47 Eur", "price": 73.10, "coupon": 2.70, "maturity": "01/03/2047"},
+            {"isin": "IT0005273013", "name": "Btp Tf 3,45% Mz48 Eur", "price": 82.08, "coupon": 3.45, "maturity": "01/03/2048"},
+            {"isin": "IT0005363111", "name": "Btp Tf 3,85% St49 Eur", "price": 86.79, "coupon": 3.85, "maturity": "01/09/2049"},
+            {"isin": "IT0005398406", "name": "Btp Tf 2,45% St50 Eur", "price": 66.58, "coupon": 2.45, "maturity": "01/09/2050"},
+            {"isin": "IT0005425233", "name": "Btp Tf 1,70% St51 Eur", "price": 55.19, "coupon": 1.70, "maturity": "01/09/2051"},
+            {"isin": "IT0005480980", "name": "Btp Tf 2,15% St52 Eur", "price": 60.42, "coupon": 2.15, "maturity": "01/09/2052"},
+            {"isin": "IT0005534141", "name": "Btp Tf 4,50% Ot53 Eur", "price": 94.02, "coupon": 4.50, "maturity": "01/10/2053"},
+            {"isin": "IT0005611741", "name": "Btp Fx 4,30% Oct54 Eur", "price": 90.78, "coupon": 4.30, "maturity": "01/10/2054"},
+            {"isin": "IT0005668238", "name": "Btp Fx 4,65% Oct55 Eur", "price": 95.49, "coupon": 4.65, "maturity": "01/10/2055"},
+            {"isin": "IT0005217390", "name": "Btp Tf 2,80% Mz67 Eur", "price": 65.80, "coupon": 2.80, "maturity": "01/03/2067"},
+            {"isin": "IT0005441883", "name": "Btp Tf 2,15% Mz72 Eur", "price": 54.68, "coupon": 2.15, "maturity": "01/03/2072"}
+        ];
+
+        const BORSA_MOT_URL = "https://www.borsaitaliana.it/borsa/obbligazioni/mot/btp/lista.html";
+
+        let bonds = [];
+        let filteredBonds = [];
+        let selectedBond = null;
+        let yieldChart = null;
+        let sortState = { field: "maturity", asc: true };
+
+        // Message banner helper (never uses alert/confirm)
+        function showBanner(message, type = "info") {
+            const banner = document.getElementById("statusBanner");
+            const box = document.getElementById("statusBannerBox");
+            const icon = document.getElementById("statusBannerIcon");
+            const text = document.getElementById("statusBannerText");
+
+            box.className = "rounded-xl px-4 py-3 text-xs sm:text-sm flex items-start justify-between gap-3 border";
+            if (type === "success") {
+                box.classList.add("bg-emerald-950/80", "border-emerald-700/60", "text-emerald-200");
+                icon.className = "fa-solid fa-circle-check text-emerald-400 mt-0.5 shrink-0";
+            } else if (type === "error") {
+                box.classList.add("bg-rose-950/80", "border-rose-700/60", "text-rose-200");
+                icon.className = "fa-solid fa-triangle-exclamation text-rose-400 mt-0.5 shrink-0";
+            } else if (type === "warning") {
+                box.classList.add("bg-amber-950/80", "border-amber-700/60", "text-amber-200");
+                icon.className = "fa-solid fa-circle-exclamation text-amber-400 mt-0.5 shrink-0";
+            } else {
+                box.classList.add("bg-slate-900", "border-slate-700", "text-slate-200");
+                icon.className = "fa-solid fa-circle-info text-sky-400 mt-0.5 shrink-0";
+            }
+
+            text.innerHTML = message;
+            banner.classList.remove("hidden");
+        }
+
+        function hideStatusBanner() {
+            document.getElementById("statusBanner").classList.add("hidden");
+        }
+
+        // Parse Italian comma decimals safely (e.g. "103,01" -> 103.01)
+        function parseItalianNumber(val) {
+            if (typeof val === "number") {
+                return Number.isFinite(val) ? val : NaN;
+            }
+            if (val === null || val === undefined) return NaN;
+            const cleaned = String(val)
+                .replace(/%/g, "")
+                .replace(/€/g, "")
+                .replace(/\s+/g, "")
+                .replace(/\.(?=\d{3}(?:,|$))/g, "")
+                .replace(",", ".");
+            const num = parseFloat(cleaned);
+            return Number.isFinite(num) ? num : NaN;
+        }
+
+        // Parse DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY or YYYY-MM-DD
+        function parseMaturityDate(dateStr) {
+            if (!dateStr) return null;
+            const str = String(dateStr).trim();
+            const dmy = str.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
+            if (dmy) {
+                const day = parseInt(dmy[1], 10);
+                const month = parseInt(dmy[2], 10) - 1;
+                let year = parseInt(dmy[3], 10);
+                if (year < 100) year += year > 50 ? 1900 : 2000;
+                const dt = new Date(year, month, day);
+                return Number.isNaN(dt.getTime()) ? null : dt;
+            }
+            const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (iso) {
+                const dt = new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+                return Number.isNaN(dt.getTime()) ? null : dt;
+            }
+            return null;
+        }
+
+        function formatDateDMY(dt) {
+            if (!dt) return "--";
+            const d = String(dt.getDate()).padStart(2, "0");
+            const m = String(dt.getMonth() + 1).padStart(2, "0");
+            const y = dt.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        // Compute remaining years and estimated net yield (12.5% taxation)
+        function enrichBondRecord(raw) {
+            const matDate = parseMaturityDate(raw.maturity);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (!matDate) return null;
+            const diffDays = (matDate - today) / (1000 * 60 * 60 * 24);
+            if (diffDays <= 0) return null;
+
+            const years = Math.max(0.05, diffDays / 365.25);
+            const price = parseItalianNumber(raw.price);
+            if (!Number.isFinite(price) || price <= 0) return null;
+
+            const coupon = parseItalianNumber(raw.coupon);
+            const safeCoupon = Number.isFinite(coupon) && coupon >= 0 ? coupon : 0;
+
+            // Net coupon yield on invested capital (12.5% tax on coupons)
+            const annualCouponNet = safeCoupon * 0.875;
+
+            // Capital gain/loss adjustment at maturity (100 par redemption)
+            // Capital gain taxed at 12.5%; capital loss above par yields 12.5% tax credit
+            let netRedemption = 100;
+            let taxCredit = 0;
+            if (price < 100) {
+                netRedemption = 100 - (100 - price) * 0.125;
+            } else if (price > 100) {
+                taxCredit = (price - 100) * 0.125;
+            }
+
+            // Semi-annual IRR / YTM solver
+            const periods = Math.max(1, Math.round(years * 2));
+            const semiNetCoupon = annualCouponNet / 2;
+            const maturityCashflow = netRedemption + taxCredit;
+
+            let low = -0.25;
+            let high = 0.50;
+            for (let i = 0; i < 60; i++) {
+                const mid = (low + high) / 2;
+                const semiRate = mid / 2;
+                let pv = 0;
+                for (let t = 1; t <= periods; t++) {
+                    const cf = t === periods ? semiNetCoupon + maturityCashflow : semiNetCoupon;
+                    pv += cf / Math.pow(1 + semiRate, t);
+                }
+                if (pv > price) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+
+            const netYield = ((low + high) / 2) * 100;
+
+            return {
+                isin: String(raw.isin).trim().toUpperCase(),
+                name: String(raw.name || raw.isin).trim(),
+                price,
+                coupon: safeCoupon,
+                maturityDate: matDate,
+                maturity: formatDateDMY(matDate),
+                years: parseFloat(years.toFixed(2)),
+                annualCouponNet: parseFloat(annualCouponNet.toFixed(4)),
+                netRedemption,
+                taxCredit,
+                netYield: parseFloat(netYield.toFixed(2))
+            };
+        }
+
+        // Parse Borsa Italiana HTML table rows
+        function parseBorsaItalianaHTML(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, "text/html");
+            const rows = Array.from(doc.querySelectorAll("table tr"));
+            const mapByIsin = new Map();
+
+            for (const tr of rows) {
+                const fullText = (tr.textContent || "").replace(/\s+/g, " ").trim();
+                const isinMatch = fullText.match(/\b(IT[0-9A-Z]{10})\b/i);
+                if (!isinMatch) continue;
+
+                const isin = isinMatch[1].toUpperCase();
+                const cells = Array.from(tr.querySelectorAll("td, th")).map(c => (c.textContent || "").replace(/\s+/g, " ").trim());
+
+                // Extract 'Ultimo' price with comma decimal handling
+                let price = NaN;
+                const ultimoMatch = fullText.match(/Ultimo[:\s]*([\d.,]+)/i);
+                if (ultimoMatch) {
+                    price = parseItalianNumber(ultimoMatch[1]);
+                }
+                if (!Number.isFinite(price)) {
+                    for (let i = 1; i < cells.length; i++) {
+                        const candidate = parseItalianNumber(cells[i]);
+                        if (Number.isFinite(candidate) && candidate >= 25 && candidate <= 170) {
+                            price = candidate;
+                            break;
+                        }
+                    }
+                }
+
+                // Skip illiquid zero-coupon strips or bonds without a valid price
+                if (!Number.isFinite(price) || price <= 0) continue;
+
+                const name = cells.find(c => c && !c.match(/^IT[0-9A-Z]{10}$/i) && !c.match(/^\d{2}[\/\.-]\d{2}[\/\.-]\d{2,4}$/)) || isin;
+
+                // Extract maturity date
+                const matMatch = fullText.match(/\b(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})\b/);
+                const maturity = matMatch ? matMatch[1].replace(/[\.-]/g, "/") : "";
+                if (!maturity) continue;
+
+                // Extract periodic coupon and convert to annual coupon
+                // Semi-annual (*2) for standard BTPs; quarterly (*4) for BTP Valore / BTP Più
+                let annualCoupon = 0;
+                const cedolaMatch = fullText.match(/Cedola[:\s]*([\d.,]+)/i);
+                if (cedolaMatch) {
+                    const periodic = parseItalianNumber(cedolaMatch[1]);
+                    if (Number.isFinite(periodic)) {
+                        const isQuarterly = /\b(valore|piu|più)\b/i.test(name);
+                        annualCoupon = parseFloat((periodic * (isQuarterly ? 4 : 2)).toFixed(4));
+                    }
+                }
+                if (annualCoupon === 0) {
+                    const pctMatch = name.match(/(\d+[.,]\d+|\d+)\s*%/);
+                    if (pctMatch) {
+                        const parsedPct = parseItalianNumber(pctMatch[1]);
+                        if (Number.isFinite(parsedPct)) annualCoupon = parsedPct;
+                    }
+                }
+
+                const enriched = enrichBondRecord({
+                    isin,
+                    name,
+                    price,
+                    coupon: annualCoupon,
+                    maturity
+                });
+
+                if (enriched && !mapByIsin.has(isin)) {
+                    mapByIsin.set(isin, enriched);
+                }
+            }
+
+            return Array.from(mapByIsin.values());
+        }
+
+        // Parse CSV text
+        function parseCSVInput(csvText) {
+            const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (lines.length < 2) return [];
+
+            const delimiter = lines[0].includes(";") ? ";" : ",";
+            const splitLine = (line) => {
+                const out = [];
+                let cur = "";
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (ch === delimiter && !inQuotes) {
+                        out.push(cur.trim());
+                        cur = "";
+                    } else {
+                        cur += ch;
+                    }
+                }
+                out.push(cur.trim());
+                return out;
+            };
+
+            const headers = splitLine(lines[0]).map(h => h.toLowerCase());
+            const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+
+            const idxIsin = findCol(["isin", "codice"]);
+            const idxName = findCol(["name", "nome", "descrizione", "titolo", "strumento"]);
+            const idxPrice = findCol(["price", "prezzo", "ultimo", "riferimento"]);
+            const idxCoupon = findCol(["coupon", "cedola", "tasso"]);
+            const idxMat = findCol(["maturity", "scadenza", "data"]);
+
+            const results = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = splitLine(lines[i]);
+                const rawRowText = cols.join(" ");
+                const isinMatch = (idxIsin >= 0 ? cols[idxIsin] : rawRowText).match(/\b(IT[0-9A-Z]{10})\b/i);
+                if (!isinMatch) continue;
+
+                const isin = isinMatch[1].toUpperCase();
+                const name = idxName >= 0 && cols[idxName] ? cols[idxName] : isin;
+                const price = idxPrice >= 0 ? parseItalianNumber(cols[idxPrice]) : NaN;
+                if (!Number.isFinite(price) || price <= 0) continue;
+
+                const matMatch = (idxMat >= 0 ? cols[idxMat] : rawRowText).match(/\b(\d{2}[\/\.-]\d{2}[\/\.-]\d{4}|\d{4}-\d{2}-\d{2})\b/);
+                if (!matMatch) continue;
+
+                let coupon = idxCoupon >= 0 ? parseItalianNumber(cols[idxCoupon]) : NaN;
+                if (!Number.isFinite(coupon)) {
+                    const pct = name.match(/(\d+[.,]\d+|\d+)\s*%/);
+                    coupon = pct ? parseItalianNumber(pct[1]) : 0;
+                }
+
+                const enriched = enrichBondRecord({
+                    isin,
+                    name,
+                    price,
+                    coupon: Number.isFinite(coupon) ? coupon : 0,
+                    maturity: matMatch[1]
+                });
+                if (enriched) results.push(enriched);
+            }
+            return results;
+        }
+
+        // Parse JSON array
+        function parseJSONInput(jsonText) {
+            const parsed = JSON.parse(jsonText);
+            const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.data) ? parsed.data : []);
+            const results = [];
+            for (const item of arr) {
+                if (!item || typeof item !== "object") continue;
+                const isinRaw = item.isin || item.ISIN || item.Isin || "";
+                const isinMatch = String(isinRaw).match(/\b(IT[0-9A-Z]{10})\b/i);
+                if (!isinMatch) continue;
+
+                const name = item.name || item.Descrizione || item.descrizione || item.title || isinMatch[1];
+                const price = parseItalianNumber(item.price ?? item.Ultimo ?? item.ultimo ?? item.prezzo);
+                if (!Number.isFinite(price) || price <= 0) continue;
+
+                const maturity = item.maturity || item.Scadenza || item.scadenza || "";
+                let coupon = parseItalianNumber(item.coupon ?? item.Cedola ?? item.cedola ?? item.tasso);
+                if (!Number.isFinite(coupon)) {
+                    const pct = String(name).match(/(\d+[.,]\d+|\d+)\s*%/);
+                    coupon = pct ? parseItalianNumber(pct[1]) : 0;
+                }
+
+                const enriched = enrichBondRecord({
+                    isin: isinMatch[1],
+                    name,
+                    price,
+                    coupon: Number.isFinite(coupon) ? coupon : 0,
+                    maturity
+                });
+                if (enriched) results.push(enriched);
+            }
+            return results;
+        }
+
+        // Universal parser supporting HTML, JSON, and CSV
+        function parseAnyBorsaSource(rawContent) {
+            const trimmed = (rawContent || "").trim();
+            if (!trimmed) return { items: [], format: "vuoto" };
+
+            if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+                try {
+                    const jsonItems = parseJSONInput(trimmed);
+                    if (jsonItems.length > 0) return { items: jsonItems, format: "JSON" };
+                } catch (_) {
+                    // Fallback to other parsers if not valid JSON
+                }
+            }
+
+            if (trimmed.includes("<tr") || trimmed.includes("<table") || trimmed.includes("<!DOCTYPE") || trimmed.includes("<html")) {
+                const htmlItems = parseBorsaItalianaHTML(trimmed);
+                if (htmlItems.length > 0) return { items: htmlItems, format: "HTML MOT" };
+            }
+
+            const csvItems = parseCSVInput(trimmed);
+            if (csvItems.length > 0) return { items: csvItems, format: "CSV" };
+
+            // Last-resort HTML scan
+            const fallbackHtml = parseBorsaItalianaHTML(trimmed);
+            return { items: fallbackHtml, format: "HTML/Testo" };
+        }
+
+        // Live sync from Borsa Italiana with custom proxy + public CORS fallback
+        async function syncFromBorsaItaliana() {
+            const btn = document.getElementById("btnSyncBorsa");
+            const icon = document.getElementById("syncIcon");
+            const btnText = document.getElementById("syncBtnText");
+
+            btn.disabled = true;
+            icon.classList.add("fa-spin");
+            btnText.innerText = "Sincronizzazione...";
+
+            const customProxy = document.getElementById("proxyInput").value.trim();
+            const candidates = [];
+
+            if (customProxy) {
+                if (customProxy.includes("{url}")) {
+                    candidates.push({ label: "Proxy locale", url: customProxy.replace("{url}", encodeURIComponent(BORSA_MOT_URL)), jsonWrap: false });
+                } else {
+                    const sep = customProxy.endsWith("/") || customProxy.endsWith("=") ? "" : "/";
+                    candidates.push({ label: "Proxy locale", url: `${customProxy}${sep}${encodeURIComponent(BORSA_MOT_URL)}`, jsonWrap: false });
+                    candidates.push({ label: "Proxy locale (raw)", url: `${customProxy}${sep}${BORSA_MOT_URL}`, jsonWrap: false });
+                }
+            }
+
+            candidates.push({
+                label: "allorigins.win",
+                url: `https://api.allorigins.win/get?url=${encodeURIComponent(BORSA_MOT_URL)}`,
+                jsonWrap: true
+            });
+            candidates.push({
+                label: "corsproxy.io",
+                url: `https://corsproxy.io/?${encodeURIComponent(BORSA_MOT_URL)}`,
+                jsonWrap: false
+            });
+
+            let extractedBonds = [];
+            let usedProxyLabel = "";
+            const errors = [];
+
+            for (const candidate of candidates) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 9000);
+                    const resp = await fetch(candidate.url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (!resp.ok) {
+                        errors.push(`${candidate.label} (HTTP ${resp.status})`);
+                        continue;
+                    }
+
+                    let htmlContent = "";
+                    if (candidate.jsonWrap) {
+                        const payload = await resp.json();
+                        htmlContent = payload && typeof payload.contents === "string" ? payload.contents : "";
+                    } else {
+                        htmlContent = await resp.text();
+                    }
+
+                    const parsed = parseBorsaItalianaHTML(htmlContent);
+                    if (parsed.length > 0) {
+                        extractedBonds = parsed;
+                        usedProxyLabel = candidate.label;
+                        break;
+                    } else {
+                        errors.push(`${candidate.label} (nessuna riga MOT valida — possibile blocco WAF/Imperva)`);
+                    }
+                } catch (err) {
+                    errors.push(`${candidate.label} (${err.name === "AbortError" ? "timeout" : err.message})`);
+                }
+            }
+
+            btn.disabled = false;
+            icon.classList.remove("fa-spin");
+            btnText.innerText = "Sincronizza da Borsa Italiana";
+
+            if (extractedBonds.length > 0) {
+                applyNewDataset(extractedBonds, `Live (${usedProxyLabel})`);
+                showBanner(
+                    `Sincronizzati <strong>${extractedBonds.length} BTP</strong> tramite <strong>${usedProxyLabel}</strong>.`,
+                    "success"
+                );
+            } else {
+                showBanner(
+                    `Impossibile completare il fetch diretto da browser verso Borsa Italiana (${errors.join("; ")}). ` +
+                    `Puoi indicare un <strong>Proxy CORS locale</strong>, usare <strong>Importa HTML/CSV/JSON</strong> oppure eseguire lo <strong>Script Python</strong> in locale e caricare il file generato.`,
+                    "warning"
+                );
+            }
+        }
+
+        function applyNewDataset(enrichedList, sourceTag) {
+            bonds = enrichedList;
+            const nowStr = new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+            document.getElementById("lastUpdateLabel").innerText = `${sourceTag} • ${nowStr}`;
+            applyFilters();
+            if (bonds.length > 0) {
+                selectBond(filteredBonds[0] || bonds[0]);
+            } else {
+                selectedBond = null;
+                document.getElementById("selectedBondBox").innerHTML = `<p class="text-slate-400">Nessun titolo disponibile per la simulazione.</p>`;
+                document.getElementById("simBreakdown").classList.add("hidden");
+            }
+        }
+
+        function resetToDefaultDataset() {
+            const enriched = DEFAULT_BTP_DATA.map(enrichBondRecord).filter(Boolean);
+            applyNewDataset(enriched, "Dataset Integrato");
+            closeImportModal();
+            showBanner(`Ripristinato il dataset integrato con <strong>${enriched.length} BTP</strong>.`, "info");
+        }
+
+        // Filtering & Sorting
+        function applyFilters() {
+            const query = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+            const matBucket = document.getElementById("maturityFilter").value;
+
+            filteredBonds = bonds.filter(b => {
+                if (query) {
+                    const match =
+                        b.isin.toLowerCase().includes(query) ||
+                        b.name.toLowerCase().includes(query) ||
+                        b.maturity.includes(query);
+                    if (!match) return false;
+                }
+
+                if (matBucket === "short" && b.years > 3) return false;
+                if (matBucket === "medium" && (b.years <= 3 || b.years > 7)) return false;
+                if (matBucket === "long" && (b.years <= 7 || b.years > 15)) return false;
+                if (matBucket === "extralong" && b.years <= 15) return false;
+
+                return true;
+            });
+
+            filteredBonds.sort((a, b) => {
+                let valA = a[sortState.field];
+                let valB = b[sortState.field];
+                if (sortState.field === "maturity") {
+                    valA = a.maturityDate.getTime();
+                    valB = b.maturityDate.getTime();
+                }
+                if (valA < valB) return sortState.asc ? -1 : 1;
+                if (valA > valB) return sortState.asc ? 1 : -1;
+                return 0;
+            });
+
+            document.getElementById("headerBondCount").innerText = bonds.length;
+            document.getElementById("filteredCountBadge").innerText = `${filteredBonds.length} titoli`;
+
+            updateKPIs();
+            renderTable();
+            renderYieldCurve();
+        }
+
+        function sortBy(field) {
+            if (sortState.field === field) {
+                sortState.asc = !sortState.asc;
+            } else {
+                sortState.field = field;
+                sortState.asc = field === "maturity" || field === "isin" || field === "name";
+            }
+            applyFilters();
+        }
+
+        function updateKPIs() {
+            if (filteredBonds.length === 0) {
+                document.getElementById("kpiAvgPrice").innerText = "--";
+                document.getElementById("kpiAvgCoupon").innerText = "--";
+                document.getElementById("kpiAvgNetYield").innerText = "--";
+                document.getElementById("kpiMaxMaturity").innerText = "--";
+                return;
+            }
+
+            const avgPrice = filteredBonds.reduce((s, b) => s + b.price, 0) / filteredBonds.length;
+            const avgCoupon = filteredBonds.reduce((s, b) => s + b.coupon, 0) / filteredBonds.length;
+            const avgNetYield = filteredBonds.reduce((s, b) => s + b.netYield, 0) / filteredBonds.length;
+            const maxYears = Math.max(...filteredBonds.map(b => b.years));
+
+            document.getElementById("kpiAvgPrice").innerText = avgPrice.toFixed(2);
+            document.getElementById("kpiAvgCoupon").innerText = `${avgCoupon.toFixed(2)}%`;
+            document.getElementById("kpiAvgNetYield").innerText = `${avgNetYield.toFixed(2)}%`;
+            document.getElementById("kpiMaxMaturity").innerText = `${maxYears.toFixed(1)}a`;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("bondsTableBody");
+            const emptyState = document.getElementById("emptyTableState");
+            tbody.innerHTML = "";
+
+            if (filteredBonds.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            }
+            emptyState.classList.add("hidden");
+
+            for (const bond of filteredBonds) {
+                const isSelected = selectedBond && selectedBond.isin === bond.isin;
+                const tr = document.createElement("tr");
+                tr.className = `cursor-pointer transition ${isSelected ? "bg-emerald-500/10" : "hover:bg-slate-800/60"}`;
+                tr.onclick = () => selectBond(bond);
+
+                const yieldColor = bond.netYield >= 0 ? "text-emerald-400" : "text-rose-400";
+                const priceColor = bond.price < 100 ? "text-sky-300" : "text-slate-100";
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3.5 font-mono-num text-xs font-semibold text-emerald-400 whitespace-nowrap">${bond.isin}</td>
+                    <td class="py-3 px-3.5 font-medium text-slate-200 whitespace-nowrap">${bond.name}</td>
+                    <td class="py-3 px-3.5 text-right font-mono-num font-bold ${priceColor} whitespace-nowrap">${bond.price.toFixed(3)}</td>
+                    <td class="py-3 px-3.5 text-right font-mono-num text-slate-300 whitespace-nowrap">${bond.coupon.toFixed(2)}%</td>
+                    <td class="py-3 px-3.5 font-mono-num text-xs text-slate-400 whitespace-nowrap">${bond.maturity}</td>
+                    <td class="py-3 px-3.5 text-right font-mono-num text-xs text-slate-400 whitespace-nowrap">${bond.years.toFixed(2)}</td>
+                    <td class="py-3 px-3.5 text-right font-mono-num font-extrabold ${yieldColor} whitespace-nowrap">${bond.netYield.toFixed(2)}%</td>
+                    <td class="py-3 px-3.5 text-center whitespace-nowrap">
+                        <button onclick="event.stopPropagation(); selectBondByIsin('${bond.isin}')" class="bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-700 hover:border-emerald-500 transition">
+                            Simula
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function selectBondByIsin(isin) {
+            const found = bonds.find(b => b.isin === isin);
+            if (found) selectBond(found);
+        }
+
+        // Yield Curve Chart (Chart.js)
+        function renderYieldCurve() {
+            const canvas = document.getElementById("yieldChart");
+            const ctx = canvas.getContext("2d");
+
+            const points = filteredBonds
+                .map(b => ({
+                    x: b.years,
+                    y: b.netYield,
+                    bond: b
+                }))
+                .sort((a, b) => a.x - b.x);
+
+            document.getElementById("chartPointCount").innerText = `${points.length} punti`;
+
+            if (yieldChart) {
+                yieldChart.destroy();
+            }
+
+            yieldChart = new Chart(ctx, {
+                type: "scatter",
+                data: {
+                    datasets: [{
+                        label: "Rendimento Netto (%)",
+                        data: points,
+                        backgroundColor: "rgba(16, 185, 129, 0.78)",
+                        borderColor: "rgb(52, 211, 153)",
+                        borderWidth: 1.5,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (_event, elements) => {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            const clicked = points[idx]?.bond;
+                            if (clicked) selectBond(clicked);
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: "#020617",
+                            titleColor: "#f8fafc",
+                            bodyColor: "#cbd5e1",
+                            borderColor: "#334155",
+                            borderWidth: 1,
+                            padding: 10,
+                            cornerRadius: 10,
+                            callbacks: {
+                                title: (items) => items[0]?.raw?.bond?.name || "",
+                                label: (item) => {
+                                    const b = item.raw.bond;
+                                    return [
+                                        `ISIN: ${b.isin}`,
+                                        `Vita residua: ${b.years.toFixed(2)} anni (${b.maturity})`,
+                                        `Prezzo: ${b.price.toFixed(3)} | Cedola: ${b.coupon.toFixed(2)}%`,
+                                        `Rend. Netto: ${b.netYield.toFixed(2)}%`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: "Vita Residua (Anni)", color: "#94a3b8", font: { size: 11, weight: "600" } },
+                            grid: { color: "rgba(51, 65, 85, 0.35)" },
+                            ticks: { color: "#94a3b8", font: { family: "JetBrains Mono", size: 11 } }
+                        },
+                        y: {
+                            title: { display: true, text: "Rendimento Netto Stimato (%)", color: "#94a3b8", font: { size: 11, weight: "600" } },
+                            grid: { color: "rgba(51, 65, 85, 0.35)" },
+                            ticks: { color: "#94a3b8", font: { family: "JetBrains Mono", size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Investment Simulator
+        function selectBond(bond) {
+            selectedBond = bond;
+            document.getElementById("selectedBondBox").innerHTML = `
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <div class="font-bold text-white text-sm">${bond.name}</div>
+                        <div class="font-mono-num text-emerald-400 text-[11px]">${bond.isin}</div>
+                    </div>
+                    <span class="font-mono-num text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${bond.maturity}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+                    <div><span class="text-slate-500 block">Prezzo</span><strong class="font-mono-num text-slate-100">${bond.price.toFixed(3)}</strong></div>
+                    <div><span class="text-slate-500 block">Cedola</span><strong class="font-mono-num text-slate-100">${bond.coupon.toFixed(2)}%</strong></div>
+                    <div><span class="text-slate-500 block">Vita</span><strong class="font-mono-num text-slate-100">${bond.years.toFixed(2)}a</strong></div>
+                </div>
+            `;
+            document.getElementById("simBreakdown").classList.remove("hidden");
+            renderTable();
+            runSimulation();
+        }
+
+        function setNominal(amount) {
+            document.getElementById("simNominalInput").value = amount;
+            runSimulation();
+        }
+
+        function runSimulation() {
+            if (!selectedBond) return;
+            const nominal = Math.max(0, parseFloat(document.getElementById("simNominalInput").value) || 0);
+            const b = selectedBond;
+
+            const outlay = nominal * (b.price / 100);
+            const annualNetCoupon = nominal * (b.annualCouponNet / 100);
+            const redemptionNet = nominal * (b.netRedemption / 100);
+            const taxCreditEuro = nominal * (b.taxCredit / 100);
+            const totalNetGain = (redemptionNet + taxCreditEuro + annualNetCoupon * b.years) - outlay;
+
+            const fmtEur = (n) => n.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+
+            document.getElementById("simOutlay").innerText = fmtEur(outlay);
+            document.getElementById("simAnnualNet").innerText = `${fmtEur(annualNetCoupon)} / anno`;
+            document.getElementById("simNetYield").innerText = `${b.netYield.toFixed(2)}%`;
+            document.getElementById("simRedemption").innerText = fmtEur(redemptionNet);
+
+            const gainEl = document.getElementById("simTotalGain");
+            gainEl.innerText = `${totalNetGain >= 0 ? "+" : ""}${fmtEur(totalNetGain)}`;
+            gainEl.className = `font-mono-num font-extrabold text-sm ${totalNetGain >= 0 ? "text-emerald-400" : "text-rose-400"}`;
+        }
+
+        // Import Modal Controls
+        function openImportModal() {
+            document.getElementById("importModalMsg").classList.add("hidden");
+            document.getElementById("importModal").classList.remove("hidden");
+        }
+
+        function closeImportModal() {
+            document.getElementById("importModal").classList.add("hidden");
+        }
+
+        function showImportModalMsg(msg, isError = false) {
+            const el = document.getElementById("importModalMsg");
+            el.className = `text-xs px-3 py-2 rounded-lg ${isError ? "bg-rose-950 text-rose-300 border border-rose-800" : "bg-emerald-950 text-emerald-300 border border-emerald-800"}`;
+            el.innerText = msg;
+            el.classList.remove("hidden");
+        }
+
+        function processPastedImport() {
+            const rawText = document.getElementById("importRawTextarea").value;
+            const { items, format } = parseAnyBorsaSource(rawText);
+            if (items.length === 0) {
+                showImportModalMsg("Nessun BTP valido trovato nel contenuto incollato. Verifica che siano presenti ISIN, prezzo e scadenza.", true);
+                return;
+            }
+            applyNewDataset(items, `Import ${format}`);
+            closeImportModal();
+            showBanner(`Importati <strong>${items.length} BTP</strong> in formato <strong>${format}</strong>.`, "success");
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            readUploadedFile(file);
+        }
+
+        function readUploadedFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = String(e.target?.result || "");
+                const { items, format } = parseAnyBorsaSource(content);
+                if (items.length === 0) {
+                    showImportModalMsg(`Impossibile estrarre BTP validi da "${file.name}".`, true);
+                    return;
+                }
+                applyNewDataset(items, `${file.name} (${format})`);
+                closeImportModal();
+                showBanner(`Caricati <strong>${items.length} BTP</strong> da <strong>${file.name}</strong>.`, "success");
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        // Drag & drop setup
+        const dropZone = document.getElementById("dropZone");
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("border-emerald-400", "bg-slate-900");
+        });
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("border-emerald-400", "bg-slate-900");
+        });
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("border-emerald-400", "bg-slate-900");
+            const file = e.dataTransfer?.files?.[0];
+            if (file) readUploadedFile(file);
+        });
+
+        // Python Modal & Copy
+        function openPythonModal() {
+            document.getElementById("pythonModal").classList.remove("hidden");
+        }
+
+        function closePythonModal() {
+            document.getElementById("pythonModal").classList.add("hidden");
+        }
+
+        function copyPythonScript() {
+            const codeText = document.getElementById("pythonScriptCode").innerText;
+            const btn = document.getElementById("copyPythonBtn");
+
+            const tempArea = document.createElement("textarea");
+            tempArea.value = codeText;
+            tempArea.setAttribute("readonly", "");
+            tempArea.style.position = "fixed";
+            tempArea.style.left = "-9999px";
+            document.body.appendChild(tempArea);
+            tempArea.select();
+
+            let copied = false;
+            try {
+                copied = document.execCommand("copy");
+            } catch (_) {
+                copied = false;
+            }
+            document.body.removeChild(tempArea);
+
+            if (copied) {
+                btn.innerHTML = `<i class="fa-solid fa-check"></i><span>Copiato!</span>`;
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-regular fa-copy"></i><span>Copia Script Python</span>`;
+                }, 2000);
+            } else {
+                showBanner("Seleziona manualmente il testo dello script Python e copialo con Ctrl+C / Cmd+C.", "warning");
+            }
+        }
+
+        // Proxy persistence in localStorage
+        function saveProxyConfig() {
+            const val = document.getElementById("proxyInput").value.trim();
+            try {
+                localStorage.setItem("btp_custom_cors_proxy", val);
+            } catch (_) {
+                // Ignore storage errors in restricted contexts
+            }
+            showBanner(val ? `Proxy CORS locale impostato su <strong>${val}</strong>.` : "Proxy locale rimosso: verrà usato il fallback automatico.", "info");
+        }
+
+        function loadProxyConfig() {
+            try {
+                const saved = localStorage.getItem("btp_custom_cors_proxy");
+                if (saved) document.getElementById("proxyInput").value = saved;
+            } catch (_) {
+                // Ignore storage errors
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener("DOMContentLoaded", () => {
+            loadProxyConfig();
+            const initial = DEFAULT_BTP_DATA.map(enrichBondRecord).filter(Boolean);
+            applyNewDataset(initial, "Dataset Integrato");
+        });
+    </script>
+</body>
+</html>
