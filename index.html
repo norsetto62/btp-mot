@@ -679,18 +679,18 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
             const diffDays = (matDate - today) / (1000 * 60 * 60 * 24);
             if (diffDays <= 0) return null;
 
-            const years = Math.max(0.05, diffDays / 365.25);
+            const years = Math.max(0.02, diffDays / 365.25);
             const price = parseItalianNumber(raw.price);
             if (!Number.isFinite(price) || price <= 0) return null;
 
             const coupon = parseItalianNumber(raw.coupon);
             const safeCoupon = Number.isFinite(coupon) && coupon >= 0 ? coupon : 0;
 
-            // Net coupon yield on invested capital (12.5% tax on coupons)
+            // Cedola annua netta (tassazione 12,5%) e semestrale netta
             const annualCouponNet = safeCoupon * 0.875;
+            const semiNetCoupon = annualCouponNet / 2;
 
-            // Capital gain/loss adjustment at maturity (100 par redemption)
-            // Capital gain taxed at 12.5%; capital loss above par yields 12.5% tax credit
+            // Rimborso a 100 con imposta 12,5% sul capital gain (o credito d'imposta se > 100)
             let netRedemption = 100;
             let taxCredit = 0;
             if (price < 100) {
@@ -699,20 +699,24 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 taxCredit = (price - 100) * 0.125;
             }
 
-            // Semi-annual IRR / YTM solver
-            const periods = Math.max(1, Math.round(years * 2));
-            const semiNetCoupon = annualCouponNet / 2;
             const maturityCashflow = netRedemption + taxCredit;
 
+            // Date relative (in anni) delle cedole future: a ritroso dalla scadenza ogni 0,5 anni
+            const couponTimes = [];
+            for (let t = years; t > 0.001; t -= 0.5) {
+                couponTimes.push(t);
+            }
+
+            // Ricerca del rendimento annuo effettivo r (capitalizzazione annua composta)
             let low = -0.25;
             let high = 0.50;
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 70; i++) {
                 const mid = (low + high) / 2;
-                const semiRate = mid / 2;
-                let pv = 0;
-                for (let t = 1; t <= periods; t++) {
-                    const cf = t === periods ? semiNetCoupon + maturityCashflow : semiNetCoupon;
-                    pv += cf / Math.pow(1 + semiRate, t);
+                let pv = maturityCashflow / Math.pow(1 + mid, years);
+                if (semiNetCoupon > 0) {
+                    for (const t of couponTimes) {
+                        pv += semiNetCoupon / Math.pow(1 + mid, t);
+                    }
                 }
                 if (pv > price) {
                     low = mid;
@@ -737,6 +741,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 netYield: parseFloat(netYield.toFixed(2))
             };
         }
+
 
         // Parse Borsa Italiana HTML table rows
         function parseBorsaItalianaHTML(htmlString) {
