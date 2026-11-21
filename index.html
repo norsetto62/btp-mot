@@ -1329,39 +1329,47 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
         }
 
         function runSimulation() {
-            if (!selectedBond) return;
-            const formatEuro = (val) => val.toFixed(2).replace('.', ',') + ' €';
-            const nominal = parseFloat(document.getElementById('simNominal')?.value) || 0;
-            const b = selectedBond;
+                if (!selectedBond) return;
+                const formatEuro = (val) => val.toFixed(2).replace('.', ',') + ' €';
+    
+                // Legge l'id reale dell'input: simNominalInput
+                const rawVal = document.getElementById('simNominalInput')?.value ?? '10000';
+                const nominal = parseFloat(String(rawVal).replace(/\s/g, '').replace(',', '.')) || 0;
+                const b = selectedBond;
+    
+                // Mostra il pannello del breakdown se era nascosto
+                const breakdownEl = document.getElementById('simBreakdown');
+                if (breakdownEl) breakdownEl.classList.remove('hidden');
+    
+                // 1. Esborso reale = prezzo tel quel netto (corso secco + rateo netto maturato)
+                const dirtyPrice = b.dirtyPrice || b.price;
+                const outlay = nominal * (dirtyPrice / 100);
+    
+                // 2. Cedole nette effettive ancora da incassare fino a scadenza
+                const annualNetCouponEuro = nominal * (b.annualCouponNet / 100);
+                const totalNetCouponsReceived = annualNetCouponEuro * b.years;
+    
+                // 3. Rimborso netto a scadenza (100 - imposta 12,5% sul capital gain) + eventuale credito d'imposta
+                const redemptionNet = nominal * (b.netRedemption / 100);
+                const taxCreditEuro = nominal * ((b.taxCredit || 0) / 100);
+    
+                // 4. Guadagno netto reale totale = (Rimborso netto + Cedole future incassate) - Esborso tel quel
+                const totalNetGain = (redemptionNet + taxCreditEuro + totalNetCouponsReceived) - outlay;
+    
+                // Aggiorna gli id esatti presenti nel tuo HTML
+                document.getElementById('simOutlay').textContent = formatEuro(outlay);
+                document.getElementById('simAnnualNet').textContent = `${formatEuro(annualNetCouponEuro)} / anno`;
+                document.getElementById('simNetYield').textContent = `${b.netYield.toFixed(2)}%`;
+                document.getElementById('simRedemption').textContent = formatEuro(redemptionNet);
+    
+                const gainEl = document.getElementById('simTotalGain');
+                if (gainEl) {
+                    gainEl.textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
+                    gainEl.classList.toggle('text-rose-400', totalNetGain < 0);
+                    gainEl.classList.toggle('text-emerald-400', totalNetGain >= 0);
+                }
+            }
         
-            // 1. Esborso reale = prezzo tel quel netto (corso secco + rateo netto maturato)
-            const dirtyPrice = b.dirtyPrice || b.price;
-            const outlay = nominal * (dirtyPrice / 100);
-        
-            // 2. Cedole nette effettive ancora da incassare fino a scadenza (al netto del rateo già pagato)
-            const totalNetCouponsReceived = nominal * ((b.annualCouponNet * b.years) / 100);
-        
-            // 3. Rimborso netto a scadenza (100 - imposta 12,5% sul capital gain) + eventuale credito d'imposta
-            const redemptionNet = nominal * (b.netRedemption / 100);
-            const taxCreditEuro = nominal * ((b.taxCredit || 0) / 100);
-        
-            // 4. Guadagno netto reale totale = (Rimborso netto + Cedole future incassate) - Esborso tel quel
-            const totalNetGain = (redemptionNet + taxCreditEuro + totalNetCouponsReceived) - outlay;
-        
-            // Aggiorna la UI del simulatore
-            document.getElementById('simOutlay').textContent = formatEuro(outlay);
-            document.getElementById('simAnnualNet').textContent = `${formatEuro(nominal * (b.annualCouponNet / 100))} / anno`;
-            document.getElementById('simNetYield').textContent = `${b.netYield.toFixed(2)}%`;
-            document.getElementById('simRedemption').textContent = formatEuro(redemptionNet);
-            document.getElementById('simTotalGain').textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
-        }
-        
-        // Import Modal Controls
-        function openImportModal() {
-            document.getElementById("importModalMsg").classList.add("hidden");
-            document.getElementById("importModal").classList.remove("hidden");
-        }
-
         function closeImportModal() {
             document.getElementById("importModal").classList.add("hidden");
         }
