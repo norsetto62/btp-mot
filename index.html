@@ -1329,27 +1329,31 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
 
         function runSimulation() {
             if (!selectedBond) return;
-            const nominal = Math.max(0, parseFloat(document.getElementById("simNominalInput").value) || 0);
+            const nominal = parseFloat(document.getElementById('simNominal')?.value) || 0;
             const b = selectedBond;
-
-            const outlay = nominal * (b.price / 100);
-            const annualNetCoupon = nominal * (b.annualCouponNet / 100);
+        
+            // 1. Esborso reale = prezzo tel quel netto (corso secco + rateo netto maturato)
+            const dirtyPrice = b.dirtyPrice || b.price;
+            const outlay = nominal * (dirtyPrice / 100);
+        
+            // 2. Cedole nette effettive ancora da incassare fino a scadenza (al netto del rateo già pagato)
+            const totalNetCouponsReceived = nominal * ((b.annualCouponNet * b.years) / 100);
+        
+            // 3. Rimborso netto a scadenza (100 - imposta 12,5% sul capital gain) + eventuale credito d'imposta
             const redemptionNet = nominal * (b.netRedemption / 100);
-            const taxCreditEuro = nominal * (b.taxCredit / 100);
-            const totalNetGain = (redemptionNet + taxCreditEuro + annualNetCoupon * b.years) - outlay;
-
-            const fmtEur = (n) => n.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
-
-            document.getElementById("simOutlay").innerText = fmtEur(outlay);
-            document.getElementById("simAnnualNet").innerText = `${fmtEur(annualNetCoupon)} / anno`;
-            document.getElementById("simNetYield").innerText = `${b.netYield.toFixed(2)}%`;
-            document.getElementById("simRedemption").innerText = fmtEur(redemptionNet);
-
-            const gainEl = document.getElementById("simTotalGain");
-            gainEl.innerText = `${totalNetGain >= 0 ? "+" : ""}${fmtEur(totalNetGain)}`;
-            gainEl.className = `font-mono-num font-extrabold text-sm ${totalNetGain >= 0 ? "text-emerald-400" : "text-rose-400"}`;
+            const taxCreditEuro = nominal * ((b.taxCredit || 0) / 100);
+        
+            // 4. Guadagno netto reale totale = (Rimborso netto + Cedole future incassate) - Esborso tel quel
+            const totalNetGain = (redemptionNet + taxCreditEuro + totalNetCouponsReceived) - outlay;
+        
+            // Aggiorna la UI del simulatore
+            document.getElementById('simOutlay').textContent = formatEuro(outlay);
+            document.getElementById('simCoupon').textContent = `${formatEuro(nominal * (b.annualCouponNet / 100))} / anno`;
+            document.getElementById('simYield').textContent = `${b.netYield.toFixed(2)}%`;
+            document.getElementById('simRedemption').textContent = formatEuro(redemptionNet);
+            document.getElementById('simGain').textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
         }
-
+        
         // Import Modal Controls
         function openImportModal() {
             document.getElementById("importModalMsg").classList.add("hidden");
