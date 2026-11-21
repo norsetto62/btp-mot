@@ -142,7 +142,7 @@
 
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rendimento Netto Medio</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rendimento Netto Medio Annuo Reale</span>
                     <span class="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
                         <i class="fa-solid fa-chart-line text-sm"></i>
                     </span>
@@ -230,8 +230,12 @@
                         <span id="simNetYield" class="font-mono-num font-bold text-sky-400">--</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-400">Rimborso Netto Nominale:</span>
+                        <span class="text-slate-400">Rendimento Netto Lineare Annuo:</span>
                         <span id="simRedemption" class="font-mono-num font-semibold text-slate-200">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">TIR Netto (effettivo):</span>
+                        <span id="simTir" class="font-mono-num font-bold text-sky-400">--</span>
                     </div>
                     <div class="flex justify-between items-center pt-2 border-t border-slate-800/80">
                         <span class="text-slate-300 font-semibold">Guadagno Netto Totale:</span>
@@ -256,6 +260,12 @@
                         <option value="long">Lungo termine (7 – 15 anni)</option>
                         <option value="extralong">Extra lungo (&gt; 15 anni)</option>
                     </select>
+                    <select id="btpTypeFilter" onchange="applyFilters()"
+                        class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 font-medium">
+                        <option value="ordinary" selected>BTP ordinari (esclusi STRIP)</option>
+                        <option value="comparable">Tasso fisso + STRIP</option>
+                        <option value="all">Tutti i titoli</option>
+                    </select>
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
                         <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Cerca ISIN, nome o anno..." class="w-full sm:w-64 pl-8 pr-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
@@ -273,7 +283,7 @@
                             <th class="py-3 px-3.5 text-right cursor-pointer hover:text-white transition" onclick="sortBy('coupon')">Cedola Lorda <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
                             <th class="py-3 px-3.5 cursor-pointer hover:text-white transition" onclick="sortBy('maturity')">Scadenza <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
                             <th class="py-3 px-3.5 text-right cursor-pointer hover:text-white transition" onclick="sortBy('years')">Vita (a) <i class="fa-solid fa-sort ml-1 text-slate-600"></i></th>
-                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-emerald-300 text-emerald-400 transition" onclick="sortBy('netYield')">Rend. Netto <i class="fa-solid fa-sort ml-1"></i></th>
+                            <th class="py-3 px-3.5 text-right cursor-pointer hover:text-emerald-300 text-emerald-400 transition" onclick="sortBy('realAnnualizedNetReturn')"> Rend. Netto Annuo <i class="fa-solid fa-sort ml-1"></i></th>
                             <th class="py-3 px-3.5 text-center">Simula</th>
                         </tr>
                     </thead>
@@ -698,6 +708,31 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 nextCouponDate: nextCoupon
             };
         }
+
+        function classifyBtp(name) {
+            const norm = String(name || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase();
+
+            if (norm.includes('STRIP')) {
+                return { type: 'STRIP', label: 'STRIP', isFixedComparable: true };
+            }
+            if (/\bBTPI\b/.test(norm) || /\bBTP\s+ITALIA\b/.test(norm)) {
+                return { type: 'INFLATION', label: 'Indicizzato', isFixedComparable: false };
+            }
+            if (/\bVALORE\b/.test(norm)) {
+                return { type: 'VALORE', label: 'BTP Valore', isFixedComparable: false };
+            }
+            if (/\bFUTURA\b/.test(norm)) {
+                return { type: 'FUTURA', label: 'BTP Futura', isFixedComparable: false };
+            }
+            if (/\bPIU\b/.test(norm)) {
+                return { type: 'PIU', label: 'BTP Più', isFixedComparable: false };
+            }
+        
+            return { type: 'FIXED', label: 'Tasso Fisso', isFixedComparable: true };
+        }
         
         function enrichBondRecord(raw) {
             const matDate = parseMaturityDate(raw.maturity);
@@ -770,7 +805,22 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
         
             const netYield = ((low + high) / 2) * 100;
             const yearsRemaining = Math.max(0.02, ((matDate - today) / msPerDay) / 365.25);
-        
+            const classification = classifyBtp(raw.name);
+
+            // Numero effettivo di cedole future
+            const futureCouponCount = futureDates.length;
+            
+            // Guadagno netto complessivo stimato
+            const totalNetCoupons = semiNetCoupon * futureCouponCount;
+            const totalNetGain =
+                netRedemption + taxCredit + totalNetCoupons - dirtyPrice;
+            
+            // Rendimento lineare annualizzato sul capitale effettivamente investito
+            const realAnnualizedNetReturn =
+                yearsRemaining > 0 && dirtyPrice > 0
+                    ? (totalNetGain / (dirtyPrice * yearsRemaining)) * 100
+                    : 0;
+            
             return {
                 isin: String(raw.isin).trim().toUpperCase(),
                 name: String(raw.name || raw.isin).trim(),
@@ -784,8 +834,14 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 annualCouponNet: parseFloat(annualCouponNet.toFixed(4)),
                 netRedemption,
                 taxCredit,
-                netYield: parseFloat(netYield.toFixed(2))
-            };
+                netYield: parseFloat(netYield.toFixed(2)),
+                classification,
+                futureCouponCount,
+                totalNetCoupons: parseFloat(totalNetCoupons.toFixed(5)),
+                totalNetGain: parseFloat(totalNetGain.toFixed(5)),
+                realAnnualizedNetReturn:
+                    parseFloat(realAnnualizedNetReturn.toFixed(4)),
+                };
         }
 
 
@@ -1108,7 +1164,8 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
         function applyFilters() {
             const query = (document.getElementById("searchInput").value || "").trim().toLowerCase();
             const matBucket = document.getElementById("maturityFilter").value;
-
+            const typeFilter = document.getElementById("btpTypeFilter").value;
+            
             filteredBonds = bonds.filter(b => {
                 if (query) {
                     const match =
@@ -1123,6 +1180,9 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 if (matBucket === "long" && (b.years <= 7 || b.years > 15)) return false;
                 if (matBucket === "extralong" && b.years <= 15) return false;
 
+                if (typeFilter === "ordinary" && b.classification.type !== "FIXED") return false;
+                if (typeFilter === "comparable" && !b.classification.isFixedComparable) return false;
+                
                 return true;
             });
 
@@ -1167,7 +1227,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
 
             const avgPrice = filteredBonds.reduce((s, b) => s + b.price, 0) / filteredBonds.length;
             const avgCoupon = filteredBonds.reduce((s, b) => s + b.coupon, 0) / filteredBonds.length;
-            const avgNetYield = filteredBonds.reduce((s, b) => s + b.netYield, 0) / filteredBonds.length;
+            const avgNetYield = filteredBonds.reduce((s, b) => s + b.realAnnualizedNetReturn, 0) / filteredBonds.length;
             const maxYears = Math.max(...filteredBonds.map(b => b.years));
 
             document.getElementById("kpiAvgPrice").innerText = avgPrice.toFixed(2);
@@ -1193,7 +1253,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 tr.className = `cursor-pointer transition ${isSelected ? "bg-emerald-500/10" : "hover:bg-slate-800/60"}`;
                 tr.onclick = () => selectBond(bond);
 
-                const yieldColor = bond.netYield >= 0 ? "text-emerald-400" : "text-rose-400";
+                const yieldColor = bond.realAnnualizedNetReturn >= 0 ? "text-emerald-400" : "text-rose-400";
                 const priceColor = bond.price < 100 ? "text-sky-300" : "text-slate-100";
 
                 tr.innerHTML = `
@@ -1203,7 +1263,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                     <td class="py-3 px-3.5 text-right font-mono-num text-slate-300 whitespace-nowrap">${bond.coupon.toFixed(2)}%</td>
                     <td class="py-3 px-3.5 font-mono-num text-xs text-slate-400 whitespace-nowrap">${bond.maturity}</td>
                     <td class="py-3 px-3.5 text-right font-mono-num text-xs text-slate-400 whitespace-nowrap">${bond.years.toFixed(2)}</td>
-                    <td class="py-3 px-3.5 text-right font-mono-num font-extrabold ${yieldColor} whitespace-nowrap">${bond.netYield.toFixed(2)}%</td>
+                    <td class="py-3 px-3.5 text-right font-mono-num font-extrabold ${yieldColor} whitespace-nowrap">${bond.realAnnualizedNetReturn.toFixed(2)}%</td>
                     <td class="py-3 px-3.5 text-center whitespace-nowrap">
                         <button onclick="event.stopPropagation(); selectBondByIsin('${bond.isin}')" class="bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-700 hover:border-emerald-500 transition">
                             Simula
@@ -1227,7 +1287,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
             const points = filteredBonds
                 .map(b => ({
                     x: b.years,
-                    y: b.netYield,
+                    y: b.realAnnualizedNetReturn,
                     bond: b
                 }))
                 .sort((a, b) => a.x - b.x);
@@ -1279,7 +1339,8 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                                         `ISIN: ${b.isin}`,
                                         `Vita residua: ${b.years.toFixed(2)} anni (${b.maturity})`,
                                         `Prezzo: ${b.price.toFixed(3)} | Cedola: ${b.coupon.toFixed(2)}%`,
-                                        `Rend. Netto: ${b.netYield.toFixed(2)}%`
+                                        `Rend. Lineare Netto: ${b.realAnnualizedNetReturn.toFixed(2)}%`,
+                                        `TIR Netto: ${b.netYield.toFixed(2)}%`
                                     ];
                                 }
                             }
@@ -1292,7 +1353,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                             ticks: { color: "#94a3b8", font: { family: "JetBrains Mono", size: 11 } }
                         },
                         y: {
-                            title: { display: true, text: "Rendimento Netto Stimato (%)", color: "#94a3b8", font: { size: 11, weight: "600" } },
+                            title: { display: true, text: "Rendimento Netto Lineare Annuo (%)", color: "#94a3b8", font: { size: 11, weight: "600" } },
                             grid: { color: "rgba(51, 65, 85, 0.35)" },
                             ticks: { color: "#94a3b8", font: { family: "JetBrains Mono", size: 11 } }
                         }
@@ -1340,35 +1401,61 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 // Mostra il pannello del breakdown se era nascosto
                 const breakdownEl = document.getElementById('simBreakdown');
                 if (breakdownEl) breakdownEl.classList.remove('hidden');
-    
-                // 1. Esborso reale = prezzo tel quel netto (corso secco + rateo netto maturato)
+
+                // Esborso tel-quel
                 const dirtyPrice = b.dirtyPrice || b.price;
                 const outlay = nominal * (dirtyPrice / 100);
-    
-                // 2. Cedole nette effettive ancora da incassare fino a scadenza
-                const annualNetCouponEuro = nominal * (b.annualCouponNet / 100);
-                const totalNetCouponsReceived = annualNetCouponEuro * b.years;
-    
-                // 3. Rimborso netto a scadenza (100 - imposta 12,5% sul capital gain) + eventuale credito d'imposta
-                const redemptionNet = nominal * (b.netRedemption / 100);
-                const taxCreditEuro = nominal * ((b.taxCredit || 0) / 100);
-    
-                // 4. Guadagno netto reale totale = (Rimborso netto + Cedole future incassate) - Esborso tel quel
-                const totalNetGain = (redemptionNet + taxCreditEuro + totalNetCouponsReceived) - outlay;
+
+                // Cedole effettive future
+                const totalNetCouponsReceived =
+                    nominal * (b.totalNetCoupons / 100);
+
+                const annualNetCouponEuro =
+                    nominal * (b.annualCouponNet / 100);
+
+                // Rimborso e credito fiscale
+                const redemptionNet =
+                    nominal * (b.netRedemption / 100);
+
+                const taxCreditEuro =
+                    nominal * ((b.taxCredit || 0) / 100);
+
+                // Guadagno totale
+                    const totalNetGain =
+                        redemptionNet + taxCreditEuro +
+                        totalNetCouponsReceived - outlay;
+
+                // Rendimento lineare annualizzato
+                const realAnnualizedNetReturn =
+                    b.years > 0
+                    ? (totalNetGain / (outlay * b.years)) * 100
+                    : 0;    
     
                 // Aggiorna gli id esatti presenti nel tuo HTML
-                document.getElementById('simOutlay').textContent = formatEuro(outlay);
-                document.getElementById('simAnnualNet').textContent = `${formatEuro(annualNetCouponEuro)} / anno`;
-                document.getElementById('simNetYield').textContent = `${b.netYield.toFixed(2)}%`;
-                document.getElementById('simRedemption').textContent = formatEuro(redemptionNet);
-    
+                document.getElementById('simOutlay').textContent =
+                    formatEuro(outlay);
+                
+                document.getElementById('simAnnualNet').textContent =
+                    `${formatEuro(annualNetCouponEuro)} / anno`;
+                
+                document.getElementById('simNetYield').textContent =
+                    `${realAnnualizedNetReturn.toFixed(2)}%`;
+                
+                document.getElementById('simTir').textContent =
+                    `${b.netYield.toFixed(2)}%`;
+                
+                document.getElementById('simRedemption').textContent =
+                    formatEuro(redemptionNet);
+                
                 const gainEl = document.getElementById('simTotalGain');
                 if (gainEl) {
-                    gainEl.textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
+                    gainEl.textContent =
+                        `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
+                
                     gainEl.classList.toggle('text-rose-400', totalNetGain < 0);
                     gainEl.classList.toggle('text-emerald-400', totalNetGain >= 0);
-                }
-            }
+                }            
+        }
         
         function closeImportModal() {
             document.getElementById("importModal").classList.add("hidden");
