@@ -1349,10 +1349,10 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
         
             // Aggiorna la UI del simulatore
             document.getElementById('simOutlay').textContent = formatEuro(outlay);
-            document.getElementById('simCoupon').textContent = `${formatEuro(nominal * (b.annualCouponNet / 100))} / anno`;
-            document.getElementById('simYield').textContent = `${b.netYield.toFixed(2)}%`;
+            document.getElementById('simAnnualNet').textContent = `${formatEuro(nominal * (b.annualCouponNet / 100))} / anno`;
+            document.getElementById('simNetYield').textContent = `${b.netYield.toFixed(2)}%`;
             document.getElementById('simRedemption').textContent = formatEuro(redemptionNet);
-            document.getElementById('simGain').textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
+            document.getElementById('simTotalGain').textContent = `${totalNetGain >= 0 ? '+' : ''}${formatEuro(totalNetGain)}`;
         }
         
         // Import Modal Controls
