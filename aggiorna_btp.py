@@ -48,12 +48,21 @@ def estrai_titoli_pagina(html_text):
             except ValueError:
                 price = None
 
-        # Cedola periodica -> annua (x2 semestrale, x4 trimestrale per BTP Valore / Più)
+        # Estrazione cedola periodale e periodicità reale se presente in raw_text
         cedola_match = re.search(r"Cedola:\s*([\d.,]+)", raw_text)
         cedola_periodica = (
             float(cedola_match.group(1).replace(",", ".")) if cedola_match else 0.0
         )
-        moltiplicatore = 4 if ("Valore" in desc or "Piu" in desc) else 2
+
+        # Se nel testo compare esplicitamente la periodicità, usala; altrimenti default semestrale (x2)
+        if re.search(r"trimestral", raw_text, re.IGNORECASE):
+            moltiplicatore = 4
+        elif re.search(r"semestral", raw_text, re.IGNORECASE):
+            moltiplicatore = 2
+        else:
+            # Fallback prudente: x2 per BTP Valore (cedole semestrali), x4 solo se esplicitamente trimestrale
+            moltiplicatore = 2
+
         coupon = round(cedola_periodica * moltiplicatore, 4)
 
         # Fallback dal nome del titolo se il campo Cedola è vuoto
