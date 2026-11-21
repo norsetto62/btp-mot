@@ -1428,10 +1428,15 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
 
         // Initialize on load
         window.addEventListener("DOMContentLoaded", () => {
-            loadProxyConfig();
-            const initial = DEFAULT_BTP_DATA.map(enrichBondRecord).filter(Boolean);
-            applyNewDataset(initial, "Dataset Integrato");
+           loadProxyConfig();
+           const externalRaw = Array.isArray(window.BTP_EXTERNAL_DATA) ? window.BTP_EXTERNAL_DATA : null;
+           const sourceData = externalRaw && externalRaw.length > 0 ? externalRaw : DEFAULT_BTP_DATA;
+           const sourceLabel = externalRaw && externalRaw.length > 0 ? "btp_data.js" : "Dataset Integrato";
+
+           const initial = sourceData.map(enrichBondRecord).filter(Boolean);
+           applyNewDataset(initial, sourceLabel);
         });
+
     </script>
 </body>
 </html>
