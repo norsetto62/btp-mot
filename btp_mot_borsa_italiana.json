@@ -1011,7 +1011,7 @@
     "isin": "IT0005547408",
     "name": "Btp Valore Gn27 Eur",
     "price": 100.37,
-    "coupon": 8.0,
+    "coupon": 4.0,
     "maturity": "13/06/2027"
   },
   {
@@ -1074,7 +1074,7 @@
     "isin": "IT0005565400",
     "name": "Btp Valore Sc Oct28 Eur",
     "price": 101.7,
-    "coupon": 4.5,
+    "coupon": 2.25,
     "maturity": "10/10/2028"
   },
   {
@@ -1165,7 +1165,7 @@
     "isin": "IT0005583486",
     "name": "Btp Valore Sc Mz30 Eur",
     "price": 100.4,
-    "coupon": 3.25,
+    "coupon": 1.625,
     "maturity": "05/03/2030"
   },
   {
@@ -1193,7 +1193,7 @@
     "isin": "IT0005594483",
     "name": "Btp Valore Sc Mg30 Eur",
     "price": 100.0,
-    "coupon": 3.35,
+    "coupon": 1.675,
     "maturity": "14/05/2030"
   },
   {
@@ -1298,7 +1298,7 @@
     "isin": "IT0005634800",
     "name": "Btp Piu' Sc Fb33 Eur",
     "price": 95.43,
-    "coupon": 2.85,
+    "coupon": 1.425,
     "maturity": "25/02/2033"
   },
   {
@@ -1410,7 +1410,7 @@
     "isin": "IT0005672024",
     "name": "Btp Valore Sc Ot32 Eur",
     "price": 95.27,
-    "coupon": 2.6,
+    "coupon": 1.3,
     "maturity": "28/10/2032"
   },
   {
@@ -1473,7 +1473,7 @@
     "isin": "IT0005696338",
     "name": "Btp Valore Sc Mar32 Eur",
     "price": 96.17,
-    "coupon": 2.6,
+    "coupon": 1.3,
     "maturity": "10/03/2032"
   },
   {
@@ -1564,7 +1564,7 @@
     "isin": "IT0005735201",
     "name": "Btp Valore Sc Oct31 Eur",
     "price": 101.7,
-    "coupon": 3.75,
+    "coupon": 1.875,
     "maturity": "27/10/2031"
   },
   {
