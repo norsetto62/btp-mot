@@ -1329,6 +1329,7 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
 
         function runSimulation() {
             if (!selectedBond) return;
+            const formatEuro = (val) => val.toFixed(2).replace('.', ',') + ' €';
             const nominal = parseFloat(document.getElementById('simNominal')?.value) || 0;
             const b = selectedBond;
         
