@@ -669,28 +669,57 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
             return `${d}/${m}/${y}`;
         }
 
-        // Compute remaining years and estimated net yield (12.5% taxation)
+        // Calcola rateo netto ACT/ACT per BTP semestrali (stacco ogni 6 mesi dalla scadenza)
+        function computeSemiNetAccrual(matDate, settleDate, annualCoupon) {
+            if (!annualCoupon || annualCoupon <= 0) return { accrualNet: 0, prevCouponDate: null, nextCouponDate: null };
+        
+            // Trova la data cedolare successiva a settleDate andando a ritroso da matDate di 6 mesi
+            let nextCoupon = new Date(matDate.getFullYear(), matDate.getMonth(), matDate.getDate());
+            let prevCoupon = new Date(nextCoupon.getFullYear(), nextCoupon.getMonth() - 6, nextCoupon.getDate());
+        
+            while (prevCoupon > settleDate) {
+                nextCoupon = prevCoupon;
+                prevCoupon = new Date(nextCoupon.getFullYear(), nextCoupon.getMonth() - 6, nextCoupon.getDate());
+            }
+            while (nextCoupon <= settleDate) {
+                prevCoupon = nextCoupon;
+                nextCoupon = new Date(nextCoupon.getFullYear(), nextCoupon.getMonth() + 6, nextCoupon.getDate());
+            }
+        
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const accruedDays = Math.max(0, (settleDate - prevCoupon) / msPerDay);
+            const periodDays = Math.max(1, (nextCoupon - prevCoupon) / msPerDay);
+            const semiCouponNet = (annualCoupon / 2) * 0.875;
+        
+            return {
+                accrualNet: semiCouponNet * (accruedDays / periodDays),
+                prevCouponDate: prevCoupon,
+                nextCouponDate: nextCoupon
+            };
+        }
+        
         function enrichBondRecord(raw) {
             const matDate = parseMaturityDate(raw.maturity);
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+            // Regolamento standard MOT T+2 (2 giorni lavorativi/solari indicativi)
+            const settleDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+        
             if (!matDate) return null;
-            const diffDays = (matDate - today) / (1000 * 60 * 60 * 24);
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const diffDays = (matDate - settleDate) / msPerDay;
             if (diffDays <= 0) return null;
-
-            const years = Math.max(0.02, diffDays / 365.25);
+        
             const price = parseItalianNumber(raw.price);
             if (!Number.isFinite(price) || price <= 0) return null;
-
+        
             const coupon = parseItalianNumber(raw.coupon);
             const safeCoupon = Number.isFinite(coupon) && coupon >= 0 ? coupon : 0;
-
-            // Cedola annua netta (tassazione 12,5%) e semestrale netta
+        
             const annualCouponNet = safeCoupon * 0.875;
             const semiNetCoupon = annualCouponNet / 2;
-
-            // Rimborso a 100 con imposta 12,5% sul capital gain (o credito d'imposta se > 100)
+        
+            // Rimborso netto a 100 (imposta 12,5% su capital gain o credito d'imposta se > 100)
             let netRedemption = 100;
             let taxCredit = 0;
             if (price < 100) {
@@ -698,43 +727,59 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
             } else if (price > 100) {
                 taxCredit = (price - 100) * 0.125;
             }
-
-            const maturityCashflow = netRedemption + taxCredit;
-
-            // Date relative (in anni) delle cedole future: a ritroso dalla scadenza ogni 0,5 anni
-            const couponTimes = [];
-            for (let t = years; t > 0.001; t -= 0.5) {
-                couponTimes.push(t);
+        
+            const { accrualNet } = computeSemiNetAccrual(matDate, settleDate, safeCoupon);
+            const dirtyPrice = price + accrualNet; // Prezzo tel quel netto
+        
+            // Costruisce i flussi di cassa netti futuri alle date cedolari reali
+            const cashflows = [];
+            let cDate = new Date(matDate.getFullYear(), matDate.getMonth(), matDate.getDate());
+            const futureDates = [];
+            while (cDate > settleDate) {
+                futureDates.push(new Date(cDate.getFullYear(), cDate.getMonth(), cDate.getDate()));
+                cDate = new Date(cDate.getFullYear(), cDate.getMonth() - 6, cDate.getDate());
             }
-
-            // Ricerca del rendimento annuo effettivo r (capitalizzazione annua composta)
+            futureDates.reverse();
+        
+            for (let i = 0; i < futureDates.length; i++) {
+                const d = futureDates[i];
+                const isMaturity = d.getTime() === matDate.getTime();
+                const cf = (semiNetCoupon > 0 ? semiNetCoupon : 0) + (isMaturity ? (netRedemption + taxCredit) : 0);
+                const daysToCf = Math.max(1, (d - settleDate) / msPerDay);
+                // Base ACT/ACT: giorni del periodo o 365.25
+                const yearFraction = daysToCf / 365.25;
+                cashflows.push({ cf, yearFraction });
+            }
+        
+            // Risolve per il TIR netto annuo effettivo (YTM netto) eguagliando PV al prezzo tel quel
             let low = -0.25;
             let high = 0.50;
-            for (let i = 0; i < 70; i++) {
+            for (let i = 0; i < 80; i++) {
                 const mid = (low + high) / 2;
-                let pv = maturityCashflow / Math.pow(1 + mid, years);
-                if (semiNetCoupon > 0) {
-                    for (const t of couponTimes) {
-                        pv += semiNetCoupon / Math.pow(1 + mid, t);
-                    }
+                let pv = 0;
+                for (const item of cashflows) {
+                    pv += item.cf / Math.pow(1 + mid, item.yearFraction);
                 }
-                if (pv > price) {
+                if (pv > dirtyPrice) {
                     low = mid;
                 } else {
                     high = mid;
                 }
             }
-
+        
             const netYield = ((low + high) / 2) * 100;
-
+            const yearsRemaining = Math.max(0.02, ((matDate - today) / msPerDay) / 365.25);
+        
             return {
                 isin: String(raw.isin).trim().toUpperCase(),
                 name: String(raw.name || raw.isin).trim(),
                 price,
+                accrualNet: parseFloat(accrualNet.toFixed(5)),
+                dirtyPrice: parseFloat(dirtyPrice.toFixed(5)),
                 coupon: safeCoupon,
                 maturityDate: matDate,
                 maturity: formatDateDMY(matDate),
-                years: parseFloat(years.toFixed(2)),
+                years: parseFloat(yearsRemaining.toFixed(2)),
                 annualCouponNet: parseFloat(annualCouponNet.toFixed(4)),
                 netRedemption,
                 taxCredit,
