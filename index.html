@@ -1430,8 +1430,32 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                     datasets: [{
                         label: "BTP — Rendimento Netto Lineare",
                         data: points,
-                        backgroundColor: "rgba(16, 185, 129, 0.78)",
-                        borderColor: "rgb(52, 211, 153)",
+                        backgroundColor: (context) => {
+                            const b = context.raw?.bond;
+                        
+                            if (!b || !curveFit) return "rgba(148, 163, 184, 0.75)";
+                        
+                            const spread = (b.realAnnualizedNetReturn -
+                                curveFit.predict(b.years)) * 100;
+                        
+                            if (spread > 5) return "rgba(16, 185, 129, 0.85)";
+                            if (spread < -5) return "rgba(239, 68, 68, 0.85)";
+                        
+                            return "rgba(148, 163, 184, 0.75)";
+                        },
+                        borderColor: (context) => {
+                            const b = context.raw?.bond;
+                        
+                            if (!b || !curveFit) return "rgb(148, 163, 184)";
+                        
+                            const spread = (b.realAnnualizedNetReturn -
+                                curveFit.predict(b.years)) * 100;
+                        
+                            if (spread > 5) return "rgb(52, 211, 153)";
+                            if (spread < -5) return "rgb(248, 113, 113)";
+                        
+                            return "rgb(148, 163, 184)";
+                        },                        
                         borderWidth: 1.5,
                         pointRadius: 5,
                         pointHoverRadius: 8,
