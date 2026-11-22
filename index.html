@@ -1279,6 +1279,119 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
             if (found) selectBond(found);
         }
 
+        // Fit empirico Nelson-Siegel sui rendimenti netti lineari (%).
+        // A tau fissato, i tre beta si stimano con minimi quadrati.
+        function fitNelsonSiegel(bonds) {
+            const obs = bonds
+                .map(b => ({
+                    x: Number(b.years),
+                    y: Number(b.realAnnualizedNetReturn)
+                }))
+                .filter(p =>
+                    Number.isFinite(p.x) &&
+                    p.x > 0 &&
+                    Number.isFinite(p.y)
+                );
+        
+            if (obs.length < 6 ||
+                new Set(obs.map(p => p.x.toFixed(3))).size < 5) {
+                return null;
+            }
+        
+            const minX = Math.min(...obs.map(p => p.x));
+            const maxX = Math.max(...obs.map(p => p.x));
+        
+            if (maxX - minX < 0.75) return null;
+        
+            const solve3 = (m, v) => {
+                const a = m.map((row, i) => [...row, v[i]]);
+        
+                for (let c = 0; c < 3; c++) {
+                    let p = c;
+        
+                    for (let r = c + 1; r < 3; r++) {
+                        if (Math.abs(a[r][c]) > Math.abs(a[p][c])) p = r;
+                    }
+        
+                    if (Math.abs(a[p][c]) < 1e-10) return null;
+        
+                    [a[c], a[p]] = [a[p], a[c]];
+        
+                    const d = a[c][c];
+        
+                    for (let j = c; j < 4; j++) a[c][j] /= d;
+        
+                    for (let r = 0; r < 3; r++) {
+                        if (r !== c) {
+                            const f = a[r][c];
+                            for (let j = 0; j < 4; j++) {
+                                a[r][j] -= f * a[c][j];
+                            }
+                        }
+                    }
+                }
+        
+                return a.map(row => row[3]);
+            };
+        
+            const basis = (x, tau) => {
+                const z = x / tau;
+                const e = Math.exp(-z);
+                const a = Math.abs(z) < 1e-8 ? 1 : (1 - e) / z;
+        
+                return [1, a, a - e];
+            };
+        
+            let best = null;
+            const maxTau = Math.max(20, maxX * 10);
+        
+            for (let i = 0; i <= 500; i++) {
+                const tau = 0.03 * Math.pow(maxTau / 0.03, i / 500);
+                const m = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+                const v = [0, 0, 0];
+        
+                for (const p of obs) {
+                    const q = basis(p.x, tau);
+        
+                    for (let r = 0; r < 3; r++) {
+                        v[r] += q[r] * p.y;
+        
+                        for (let c = 0; c < 3; c++) {
+                            m[r][c] += q[r] * q[c];
+                        }
+                    }
+                }
+        
+                const beta = solve3(m, v);
+                if (!beta) continue;
+        
+                const sse = obs.reduce((sum, p) => {
+                    const q = basis(p.x, tau);
+                    const y = beta[0] * q[0] + beta[1] * q[1] + beta[2] * q[2];
+        
+                    return sum + (p.y - y) ** 2;
+                }, 0);
+        
+                if (!best || sse < best.sse) {
+                    best = { tau, beta, sse };
+                }
+            }
+        
+            if (!best) return null;
+        
+            const rmse = Math.sqrt(best.sse / obs.length);
+            if (!Number.isFinite(rmse) || rmse > 1.0) return null;
+        
+            const predict = x => {
+                const q = basis(x, best.tau);
+                return best.beta[0] * q[0] +
+                    best.beta[1] * q[1] +
+                    best.beta[2] * q[2];
+            };
+        
+            return { predict, rmse, minX, maxX, tau: best.tau };
+        }
+        
         // Yield Curve Chart (Chart.js)
         function renderYieldCurve() {
             const canvas = document.getElementById("yieldChart");
@@ -1292,7 +1405,20 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 }))
                 .sort((a, b) => a.x - b.x);
 
-            document.getElementById("chartPointCount").innerText = `${points.length} punti`;
+            const curveFit = fitNelsonSiegel(filteredBonds);
+
+            document.getElementById("chartPointCount").innerText = curveFit
+                ? `${points.length} titoli · NS RMSE ${curveFit.rmse.toFixed(2)}%`
+                : `${points.length} titoli · fit NS non disponibile`;
+            
+            const curvePoints = curveFit
+                ? Array.from({ length: 81 }, (_, i) => {
+                    const x = curveFit.minX +
+                        (curveFit.maxX - curveFit.minX) * i / 80;
+            
+                    return { x, y: curveFit.predict(x) };
+                })
+                : [];
 
             if (yieldChart) {
                 yieldChart.destroy();
@@ -1302,27 +1428,51 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                 type: "scatter",
                 data: {
                     datasets: [{
-                        label: "Rendimento Netto (%)",
+                        label: "BTP — Rendimento Netto Lineare",
                         data: points,
                         backgroundColor: "rgba(16, 185, 129, 0.78)",
                         borderColor: "rgb(52, 211, 153)",
                         borderWidth: 1.5,
                         pointRadius: 5,
-                        pointHoverRadius: 8
-                    }]
+                        pointHoverRadius: 8,
+                        order: 1
+                    }, {
+                        label: "Best fit Nelson-Siegel",
+                        type: "line",
+                        data: curvePoints,
+                        parsing: false,
+                        borderColor: "rgb(251, 191, 36)",
+                        backgroundColor: "transparent",
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        tension: 0,
+                        fill: false,
+                        order: 0
+                    }]                
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: (_event, elements) => {
                         if (elements && elements.length > 0) {
+                            // La curva NS (dataset 1) non è selezionabile.
+                            if (elements[0].datasetIndex !== 0) return;
+                    
                             const idx = elements[0].index;
                             const clicked = points[idx]?.bond;
                             if (clicked) selectBond(clicked);
                         }
-                    },
+                    }, 
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: "#cbd5e1",
+                                boxWidth: 18,
+                                font: { size: 10 }
+                            }
+                        },
                         tooltip: {
                             backgroundColor: "#020617",
                             titleColor: "#f8fafc",
@@ -1331,16 +1481,26 @@ print(f"Completato: {len(result)} BTP salvati in btp_mot_borsa_italiana.json")</
                             borderWidth: 1,
                             padding: 10,
                             cornerRadius: 10,
+                            filter: (item) => item.datasetIndex === 0,
                             callbacks: {
                                 title: (items) => items[0]?.raw?.bond?.name || "",
                                 label: (item) => {
                                     const b = item.raw.bond;
+                                    const fitted = curveFit ? curveFit.predict(b.years) : null;
+                                    const spread = fitted === null
+                                        ? null
+                                        : (b.realAnnualizedNetReturn - fitted) * 100;
+                            
                                     return [
                                         `ISIN: ${b.isin}`,
                                         `Vita residua: ${b.years.toFixed(2)} anni (${b.maturity})`,
                                         `Prezzo: ${b.price.toFixed(3)} | Cedola: ${b.coupon.toFixed(2)}%`,
                                         `Rend. Lineare Netto: ${b.realAnnualizedNetReturn.toFixed(2)}%`,
-                                        `TIR Netto: ${b.netYield.toFixed(2)}%`
+                                        `TIR Netto: ${b.netYield.toFixed(2)}%`,
+                                        ...(fitted === null ? [] : [
+                                            `Rendimento curva NS: ${fitted.toFixed(2)}%`,
+                                            `Scostamento: ${spread >= 0 ? "+" : ""}${spread.toFixed(0)} bp ${spread >= 0 ? "(sopra)" : "(sotto)"} la curva`
+                                        ])
                                     ];
                                 }
                             }
