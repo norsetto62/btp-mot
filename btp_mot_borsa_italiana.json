@@ -2,28 +2,28 @@
   {
     "isin": "IT0001174611",
     "name": "Btp-1nv27 6,5%",
-    "price": 103.007,
+    "price": 102.995,
     "coupon": 6.5,
     "maturity": "01/11/2027"
   },
   {
     "isin": "IT0001247391",
     "name": "Btpstripital Zc May27 Eur",
-    "price": null,
+    "price": 98.514,
     "coupon": 0.0,
     "maturity": "01/05/2027"
   },
   {
     "isin": "IT0001278511",
     "name": "Btp-1nv29 5,25%",
-    "price": 104.66,
+    "price": 104.74,
     "coupon": 5.25,
     "maturity": "01/11/2029"
   },
   {
     "isin": "IT0001312781",
     "name": "Btpstripital Zc May28 Eur",
-    "price": null,
+    "price": 95.67,
     "coupon": 0.0,
     "maturity": "01/05/2028"
   },
@@ -44,7 +44,7 @@
   {
     "isin": "IT0001444378",
     "name": "Btp-1mg31 6%",
-    "price": 109.1,
+    "price": 109.26,
     "coupon": 6.0,
     "maturity": "01/05/2031"
   },
@@ -65,7 +65,7 @@
   {
     "isin": "IT0003256820",
     "name": "Btp-1fb33 5,75%",
-    "price": 109.59,
+    "price": 109.87,
     "coupon": 5.75,
     "maturity": "01/02/2033"
   },
@@ -86,14 +86,14 @@
   {
     "isin": "IT0003268890",
     "name": "Btpstripital Zc Feb28 Eur",
-    "price": 97.09,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/02/2028"
   },
   {
     "isin": "IT0003268908",
     "name": "Btpstripital Zc Aug28 Eur",
-    "price": 95.23,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/08/2028"
   },
@@ -107,14 +107,14 @@
   {
     "isin": "IT0003268932",
     "name": "Btpstripital Zc Aug29 Eur",
-    "price": null,
+    "price": 90.95,
     "coupon": 0.0,
     "maturity": "01/08/2029"
   },
   {
     "isin": "IT0003268957",
     "name": "Btpstripital Zc Feb30 Eur",
-    "price": 92.37,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/02/2030"
   },
@@ -128,70 +128,70 @@
   {
     "isin": "IT0003268999",
     "name": "Btpstripital Zc Feb31 Eur",
-    "price": null,
+    "price": 85.8,
     "coupon": 0.0,
     "maturity": "01/02/2031"
   },
   {
     "isin": "IT0003535157",
     "name": "Btp-1ag34 5%",
-    "price": 105.6,
+    "price": 105.95,
     "coupon": 5.0,
     "maturity": "01/08/2034"
   },
   {
     "isin": "IT0003745541",
     "name": "Btpi-15st35 2,35%",
-    "price": 101.69,
+    "price": 101.96,
     "coupon": 2.35,
     "maturity": "15/09/2035"
   },
   {
     "isin": "IT0003934657",
     "name": "Btp-1fb37 4%",
-    "price": 97.5,
+    "price": 97.95,
     "coupon": 4.0,
     "maturity": "01/02/2037"
   },
   {
     "isin": "IT0004286966",
     "name": "Btp-1ag39 5%",
-    "price": 104.91,
+    "price": 105.4,
     "coupon": 5.0,
     "maturity": "01/08/2039"
   },
   {
     "isin": "IT0004532559",
     "name": "Btp-1st40 5%",
-    "price": 104.7,
+    "price": 105.26,
     "coupon": 5.0,
     "maturity": "01/09/2040"
   },
   {
     "isin": "IT0004545890",
     "name": "Btpi-15st41 2,55%",
-    "price": 100.42,
+    "price": 101.0,
     "coupon": 2.55,
     "maturity": "15/09/2041"
   },
   {
     "isin": "IT0004848476",
     "name": "Btp Coupon Strip Zc Nv27 Eur",
-    "price": 97.174,
+    "price": 97.04,
     "coupon": 0.0,
     "maturity": "01/11/2027"
   },
   {
     "isin": "IT0004848484",
     "name": "Btp Coupon Strip Zc Nv29 Eur",
-    "price": 90.2,
+    "price": 90.04,
     "coupon": 0.0,
     "maturity": "01/11/2029"
   },
   {
     "isin": "IT0004848492",
     "name": "Btp Coupon Strip Zc Mg31 Eur",
-    "price": 84.72,
+    "price": 84.66,
     "coupon": 0.0,
     "maturity": "01/05/2031"
   },
@@ -219,28 +219,28 @@
   {
     "isin": "IT0004848690",
     "name": "Btpstripital Zc Ago39",
-    "price": 56.72,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/08/2039"
   },
   {
     "isin": "IT0004889033",
     "name": "Btp Tf 4,75% St28 Eur",
-    "price": 102.35,
+    "price": 102.36,
     "coupon": 4.75,
     "maturity": "01/09/2028"
   },
   {
     "isin": "IT0004923998",
     "name": "Btp Tf 4,75% St44 Eur",
-    "price": 100.67,
+    "price": 101.23,
     "coupon": 4.75,
     "maturity": "01/09/2044"
   },
   {
     "isin": "IT0004976491",
     "name": "Btpstripital Zc Mar27 Eur",
-    "price": null,
+    "price": 99.151,
     "coupon": 0.0,
     "maturity": "01/03/2027"
   },
@@ -261,7 +261,7 @@
   {
     "isin": "IT0004976525",
     "name": "Btp Coupon Strip Zc St28 Eur",
-    "price": 94.24,
+    "price": 94.42,
     "coupon": 0.0,
     "maturity": "01/09/2028"
   },
@@ -275,14 +275,14 @@
   {
     "isin": "IT0004976541",
     "name": "Btpstripital Zc Sep29 Eur",
-    "price": null,
+    "price": 90.79,
     "coupon": 0.0,
     "maturity": "01/09/2029"
   },
   {
     "isin": "IT0004976558",
     "name": "Btp Coupon Strip Zc Mz30 Eur",
-    "price": 89.19,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/03/2030"
   },
@@ -324,7 +324,7 @@
   {
     "isin": "IT0004976657",
     "name": "Btpstripital Zc Mar35 Eur",
-    "price": 70.93,
+    "price": null,
     "coupon": 0.0,
     "maturity": "01/03/2035"
   },
@@ -338,7 +338,7 @@
   {
     "isin": "IT0004976681",
     "name": "Btpstripital Zc Sep36 Eur",
-    "price": 65.87,
+    "price": 66.2,
     "coupon": 0.0,
     "maturity": "01/09/2036"
   },
@@ -394,42 +394,42 @@
   {
     "isin": "IT0005024234",
     "name": "Btp Tf 3,50% Mz30 Eur",
-    "price": 99.75,
+    "price": 99.84,
     "coupon": 3.5,
     "maturity": "01/03/2030"
   },
   {
     "isin": "IT0005083057",
     "name": "Btp Tf 3,25% St46 Eur",
-    "price": 80.74,
+    "price": 81.3,
     "coupon": 3.25,
     "maturity": "01/09/2046"
   },
   {
     "isin": "IT0005093312",
     "name": "Btp Hybrid Cpn Strip Sep46 Eur",
-    "price": null,
+    "price": 39.0,
     "coupon": 0.0,
     "maturity": "01/09/2046"
   },
   {
     "isin": "IT0005094088",
     "name": "Btp Tf 1,65% Mz32 Eur",
-    "price": 89.59,
+    "price": 89.8,
     "coupon": 1.65,
     "maturity": "01/03/2032"
   },
   {
     "isin": "IT0005138828",
     "name": "Btpi Tf 1,25% St32 Eur",
-    "price": 97.14,
+    "price": 97.1,
     "coupon": 1.25,
     "maturity": "15/09/2032"
   },
   {
     "isin": "IT0005162828",
     "name": "Btp Tf 2,7% Mz47 Eur",
-    "price": 73.35,
+    "price": 73.87,
     "coupon": 2.7,
     "maturity": "01/03/2047"
   },
@@ -443,42 +443,42 @@
   {
     "isin": "IT0005177909",
     "name": "Btp Tf 2,25% St36 Eur",
-    "price": 83.77,
+    "price": 84.17,
     "coupon": 2.25,
     "maturity": "01/09/2036"
   },
   {
     "isin": "IT0005210650",
     "name": "Btp Tf 1.25% Dc26 Eur",
-    "price": 99.977,
+    "price": 99.985,
     "coupon": 1.25,
     "maturity": "01/12/2026"
   },
   {
     "isin": "IT0005217390",
     "name": "Btp Tf 2,8% Mz67 Eur",
-    "price": 65.64,
+    "price": 66.08,
     "coupon": 2.8,
     "maturity": "01/03/2067"
   },
   {
     "isin": "IT0005240350",
     "name": "Btp Tf 2,45% St33 Eur",
-    "price": 90.86,
+    "price": 91.16,
     "coupon": 2.45,
     "maturity": "01/09/2033"
   },
   {
     "isin": "IT0005240830",
     "name": "Btp Tf 2,20% Gn27 Eur",
-    "price": 99.576,
+    "price": 99.581,
     "coupon": 2.2,
     "maturity": "01/06/2027"
   },
   {
     "isin": "IT0005246134",
     "name": "Btpi Tf 1,30% Mg28 Eur",
-    "price": 100.08,
+    "price": 100.0,
     "coupon": 1.3,
     "maturity": "15/05/2028"
   },
@@ -492,14 +492,14 @@
   {
     "isin": "IT0005273013",
     "name": "Btp Tf 3,45% Mz48 Eur",
-    "price": 82.28,
+    "price": 82.81,
     "coupon": 3.45,
     "maturity": "01/03/2048"
   },
   {
     "isin": "IT0005274805",
     "name": "Btp Tf 2,05% Ag27 Eur",
-    "price": 99.31,
+    "price": 99.32,
     "coupon": 2.05,
     "maturity": "01/08/2027"
   },
@@ -513,42 +513,42 @@
   {
     "isin": "IT0005321325",
     "name": "Btp Tf 2,95% St38 Eur",
-    "price": 86.46,
+    "price": 86.88,
     "coupon": 2.95,
     "maturity": "01/09/2038"
   },
   {
     "isin": "IT0005323032",
     "name": "Btp Tf 2,00% Fb28 Eur",
-    "price": 98.55,
+    "price": 98.56,
     "coupon": 2.0,
     "maturity": "01/02/2028"
   },
   {
     "isin": "IT0005340929",
     "name": "Btp Tf 2,80% Dc28 Eur",
-    "price": 98.9,
+    "price": 98.95,
     "coupon": 2.8,
     "maturity": "01/12/2028"
   },
   {
     "isin": "IT0005358806",
     "name": "Btp Tf 3,35% Mz35 Eur",
-    "price": 94.24,
+    "price": 94.59,
     "coupon": 3.35,
     "maturity": "01/03/2035"
   },
   {
     "isin": "IT0005363111",
     "name": "Btp Tf 3,85% St49 Eur",
-    "price": 86.91,
+    "price": 87.57,
     "coupon": 3.85,
     "maturity": "01/09/2049"
   },
   {
     "isin": "IT0005365165",
     "name": "Btp Tf 3,00% Ag29 Eur",
-    "price": 98.74,
+    "price": 98.8,
     "coupon": 3.0,
     "maturity": "01/08/2029"
   },
@@ -562,42 +562,42 @@
   {
     "isin": "IT0005367906",
     "name": "Btpstripital Zc Feb29 Eur",
-    "price": null,
+    "price": 92.59,
     "coupon": 0.0,
     "maturity": "01/02/2029"
   },
   {
     "isin": "IT0005377152",
     "name": "Btp Tf 3,1% Mz40 Eur",
-    "price": 85.86,
+    "price": 86.38,
     "coupon": 3.1,
     "maturity": "01/03/2040"
   },
   {
     "isin": "IT0005383309",
     "name": "Btp Tf 1,35% Ap30 Eur",
-    "price": 92.99,
+    "price": 93.08,
     "coupon": 1.35,
     "maturity": "01/04/2030"
   },
   {
     "isin": "IT0005387052",
     "name": "Btpi Tf 0,4% Mg30 Eur",
-    "price": 95.87,
+    "price": 95.84,
     "coupon": 0.4,
     "maturity": "15/05/2030"
   },
   {
     "isin": "IT0005387151",
     "name": "Btpstripital Zc Apr27 Eur",
-    "price": null,
+    "price": 99.2,
     "coupon": 0.0,
     "maturity": "01/04/2027"
   },
   {
     "isin": "IT0005387169",
     "name": "Btpstripital Zc Oct27 Eur",
-    "price": null,
+    "price": 97.211,
     "coupon": 0.0,
     "maturity": "01/10/2027"
   },
@@ -646,84 +646,84 @@
   {
     "isin": "IT0005390874",
     "name": "Btp Tf 0,85% Ge27 Eur",
-    "price": 99.741,
+    "price": 99.73,
     "coupon": 0.85,
     "maturity": "15/01/2027"
   },
   {
     "isin": "IT0005398406",
     "name": "Btp Tf 2,45% St50 Eur",
-    "price": 66.77,
+    "price": 67.27,
     "coupon": 2.45,
     "maturity": "01/09/2050"
   },
   {
     "isin": "IT0005402117",
     "name": "Btp Tf 1,45% Mz36 Eur",
-    "price": 78.6,
+    "price": 78.86,
     "coupon": 1.45,
     "maturity": "01/03/2036"
   },
   {
     "isin": "IT0005403396",
     "name": "Btp Tf 0,95% Ag30 Eur",
-    "price": 90.74,
+    "price": 90.85,
     "coupon": 0.95,
     "maturity": "01/08/2030"
   },
   {
     "isin": "IT0005413171",
     "name": "Btp Tf 1,65% Dc30 Eur",
-    "price": 92.36,
+    "price": 92.51,
     "coupon": 1.65,
     "maturity": "01/12/2030"
   },
   {
     "isin": "IT0005415291",
     "name": "Btp Futura Lg30 Eur",
-    "price": 91.97,
+    "price": 91.93,
     "coupon": 1.3,
     "maturity": "14/07/2030"
   },
   {
     "isin": "IT0005416570",
     "name": "Btp Tf 0,95% St27 Eur",
-    "price": 98.349,
+    "price": 98.356,
     "coupon": 0.95,
     "maturity": "15/09/2027"
   },
   {
     "isin": "IT0005421703",
     "name": "Btp Tf 1,8% Mz41 Eur",
-    "price": 71.05,
+    "price": 71.45,
     "coupon": 1.8,
     "maturity": "01/03/2041"
   },
   {
     "isin": "IT0005422891",
     "name": "Btp Tf 0,90% Ap31 Eur",
-    "price": 88.7,
+    "price": 88.83,
     "coupon": 0.9,
     "maturity": "01/04/2031"
   },
   {
     "isin": "IT0005425233",
     "name": "Btp Tf 1,7% St51 Eur",
-    "price": 55.3,
+    "price": 55.75,
     "coupon": 1.7,
     "maturity": "01/09/2051"
   },
   {
     "isin": "IT0005425761",
     "name": "Btp Futura Nv28 Eur",
-    "price": 95.15,
+    "price": 95.22,
     "coupon": 1.0,
     "maturity": "17/11/2028"
   },
   {
     "isin": "IT0005425829",
     "name": "Btpstripital Zc Oct30 Eur",
-    "price": null,
+    "price": 87.08,
     "coupon": 0.0,
     "maturity": "01/10/2030"
   },
@@ -737,133 +737,133 @@
   {
     "isin": "IT0005433195",
     "name": "Btp Tf 0,95% Mz37 Eur",
-    "price": 72.07,
+    "price": 72.46,
     "coupon": 0.95,
     "maturity": "01/03/2037"
   },
   {
     "isin": "IT0005433690",
     "name": "Btp Tf 0,25% Mz28 Eur",
-    "price": 96.22,
+    "price": 96.25,
     "coupon": 0.25,
     "maturity": "15/03/2028"
   },
   {
     "isin": "IT0005436693",
     "name": "Btp Tf 0,6% Ag31 Eur",
-    "price": 86.51,
+    "price": 86.64,
     "coupon": 0.6,
     "maturity": "01/08/2031"
   },
   {
     "isin": "IT0005436701",
     "name": "Btpi Tf 0,15% Mg51 Eur",
-    "price": 54.61,
+    "price": 55.1,
     "coupon": 0.15,
     "maturity": "15/05/2051"
   },
   {
     "isin": "IT0005438004",
     "name": "Btpgreen 1,5%Ap45eur",
-    "price": 60.72,
+    "price": 61.14,
     "coupon": 1.5,
     "maturity": "30/04/2045"
   },
   {
     "isin": "IT0005441883",
     "name": "Btp Tf 2,15% Mz72 Eur",
-    "price": 54.5,
+    "price": 54.89,
     "coupon": 2.15,
     "maturity": "01/03/2072"
   },
   {
     "isin": "IT0005442097",
     "name": "Btp Futura Ap37 Eur",
-    "price": 76.11,
+    "price": 76.53,
     "coupon": 1.2,
     "maturity": "27/04/2037"
   },
   {
     "isin": "IT0005445306",
     "name": "Btp Tf 0,5% Lg28 Eur",
-    "price": 95.67,
+    "price": 95.64,
     "coupon": 0.5,
     "maturity": "15/07/2028"
   },
   {
     "isin": "IT0005449969",
     "name": "Btp Tf 0,95% Dc31 Eur",
-    "price": 87.0,
+    "price": 87.22,
     "coupon": 0.95,
     "maturity": "01/12/2031"
   },
   {
     "isin": "IT0005466013",
     "name": "Btp Tf 0,95% Gn32 Eur",
-    "price": 85.62,
+    "price": 85.84,
     "coupon": 0.95,
     "maturity": "01/06/2032"
   },
   {
     "isin": "IT0005466351",
     "name": "Btp Futura Nv33 Eur",
-    "price": 84.15,
+    "price": 84.46,
     "coupon": 1.35,
     "maturity": "16/11/2033"
   },
   {
     "isin": "IT0005467482",
     "name": "Btp Tf 0,45% Fb29 Eur",
-    "price": 93.72,
+    "price": 93.76,
     "coupon": 0.45,
     "maturity": "15/02/2029"
   },
   {
     "isin": "IT0005480980",
     "name": "Btp Tf 2,15% St52 Eur",
-    "price": 60.7,
+    "price": 61.22,
     "coupon": 2.15,
     "maturity": "01/09/2052"
   },
   {
     "isin": "IT0005482994",
     "name": "Btpi Tf 0,1% Mg33 Eur",
-    "price": 88.36,
+    "price": 88.42,
     "coupon": 0.1,
     "maturity": "15/05/2033"
   },
   {
     "isin": "IT0005484552",
     "name": "Btp Tf 1,1% Ap27 Eur",
-    "price": 99.363,
+    "price": 99.386,
     "coupon": 1.1,
     "maturity": "01/04/2027"
   },
   {
     "isin": "IT0005494239",
     "name": "Btp Tf 2,5% Dc32 Eur",
-    "price": 92.37,
+    "price": 92.64,
     "coupon": 2.5,
     "maturity": "01/12/2032"
   },
   {
     "isin": "IT0005495731",
     "name": "Btp Tf 2,80% Gn29 Eur",
-    "price": 98.25,
+    "price": 98.34,
     "coupon": 2.8,
     "maturity": "15/06/2029"
   },
   {
     "isin": "IT0005496770",
     "name": "Btp Tf 3,25% Mz38 Eur",
-    "price": 89.63,
+    "price": 90.09,
     "coupon": 3.25,
     "maturity": "01/03/2038"
   },
   {
     "isin": "IT0005497000",
     "name": "Btp Italia Gn30 Eur",
-    "price": 100.76,
+    "price": 101.05,
     "coupon": 1.6,
     "maturity": "28/06/2030"
   },
@@ -912,14 +912,14 @@
   {
     "isin": "IT0005500068",
     "name": "Btp Tf 2,65% Dc27 Eur",
-    "price": 99.46,
+    "price": 99.47,
     "coupon": 2.65,
     "maturity": "01/12/2027"
   },
   {
     "isin": "IT0005508590",
     "name": "Btpgreen 4%Ap35eur",
-    "price": 98.68,
+    "price": 99.05,
     "coupon": 4.0,
     "maturity": "30/04/2035"
   },
@@ -933,21 +933,21 @@
   {
     "isin": "IT0005518128",
     "name": "Btp Tf 4,40% Mg33 Eur",
-    "price": 102.26,
+    "price": 102.55,
     "coupon": 4.4,
     "maturity": "01/05/2033"
   },
   {
     "isin": "IT0005519787",
     "name": "Btp Tf 3,85% Dc29 Eur",
-    "price": 100.66,
+    "price": 100.74,
     "coupon": 3.85,
     "maturity": "15/12/2029"
   },
   {
     "isin": "IT0005521981",
     "name": "Btp Tf 3,4% Ap28 Eur",
-    "price": 100.14,
+    "price": 100.12,
     "coupon": 3.4,
     "maturity": "01/04/2028"
   },
@@ -961,70 +961,70 @@
   {
     "isin": "IT0005530032",
     "name": "Btp Tf 4,45% St43 Eur",
-    "price": 97.19,
+    "price": 97.75,
     "coupon": 4.45,
     "maturity": "01/09/2043"
   },
   {
     "isin": "IT0005532723",
     "name": "Btp Italia Mz28 Eur",
-    "price": 101.43,
+    "price": 101.5,
     "coupon": 2.0,
     "maturity": "14/03/2028"
   },
   {
     "isin": "IT0005534141",
     "name": "Btp Tf 4,5% Ot53 Eur",
-    "price": 94.2,
+    "price": 94.92,
     "coupon": 4.5,
     "maturity": "01/10/2053"
   },
   {
     "isin": "IT0005542359",
     "name": "Btpgreen 4%Ot31eur",
-    "price": 100.91,
+    "price": 101.03,
     "coupon": 4.0,
     "maturity": "30/10/2031"
   },
   {
     "isin": "IT0005542797",
     "name": "Btp Tf 3,7% Gn30 Eur",
-    "price": 100.02,
+    "price": 100.17,
     "coupon": 3.7,
     "maturity": "15/06/2030"
   },
   {
     "isin": "IT0005543803",
     "name": "Btpi Tf 1.5% Mg29 Eur",
-    "price": 99.79,
+    "price": 99.78,
     "coupon": 1.5,
     "maturity": "15/05/2029"
   },
   {
     "isin": "IT0005544082",
     "name": "Btp Tf 4,35% Nv33 Eur",
-    "price": 101.59,
+    "price": 101.91,
     "coupon": 4.35,
     "maturity": "01/11/2033"
   },
   {
     "isin": "IT0005547408",
     "name": "Btp Valore Gn27 Eur",
-    "price": 100.37,
+    "price": 100.415,
     "coupon": 4.0,
     "maturity": "13/06/2027"
   },
   {
     "isin": "IT0005547812",
     "name": "Btpi Tf 2,4% Mg39 Eur",
-    "price": 97.59,
+    "price": 98.0,
     "coupon": 2.4,
     "maturity": "15/05/2039"
   },
   {
     "isin": "IT0005548315",
     "name": "Btp Tf 3,8% Ag28 Eur",
-    "price": 100.71,
+    "price": 100.72,
     "coupon": 3.8,
     "maturity": "01/08/2028"
   },
@@ -1038,7 +1038,7 @@
   {
     "isin": "IT0005550204",
     "name": "Btpstripital Zc Ott39",
-    "price": null,
+    "price": 55.5,
     "coupon": 0.0,
     "maturity": "01/10/2039"
   },
@@ -1059,28 +1059,28 @@
   {
     "isin": "IT0005560948",
     "name": "Btp Tf 4,2% Mz34 Eur",
-    "price": 100.54,
+    "price": 100.86,
     "coupon": 4.2,
     "maturity": "01/03/2034"
   },
   {
     "isin": "IT0005561888",
     "name": "Btp Fx 4% Nov30 Eur",
-    "price": 100.97,
+    "price": 101.1,
     "coupon": 4.0,
     "maturity": "15/11/2030"
   },
   {
     "isin": "IT0005565400",
     "name": "Btp Valore Sc Oct28 Eur",
-    "price": 101.7,
+    "price": 101.67,
     "coupon": 2.25,
     "maturity": "10/10/2028"
   },
   {
     "isin": "IT0005566408",
     "name": "Btp Fx 4.1% Feb29 Eur",
-    "price": 101.28,
+    "price": 101.35,
     "coupon": 4.1,
     "maturity": "01/02/2029"
   },
@@ -1143,70 +1143,70 @@
   {
     "isin": "IT0005580045",
     "name": "Btp Fx 2.95% Feb27 Eur",
-    "price": 100.015,
+    "price": 100.016,
     "coupon": 2.95,
     "maturity": "15/02/2027"
   },
   {
     "isin": "IT0005580094",
     "name": "Btp Fx 3.5% Feb31 Eur",
-    "price": 98.95,
+    "price": 99.07,
     "coupon": 3.5,
     "maturity": "15/02/2031"
   },
   {
     "isin": "IT0005582421",
     "name": "Btp Fx 4.15% Oct39 Eur",
-    "price": 96.44,
+    "price": 96.87,
     "coupon": 4.15,
     "maturity": "01/10/2039"
   },
   {
     "isin": "IT0005583486",
     "name": "Btp Valore Sc Mz30 Eur",
-    "price": 100.4,
+    "price": 100.46,
     "coupon": 1.625,
     "maturity": "05/03/2030"
   },
   {
     "isin": "IT0005584849",
     "name": "Btp Fx 3.35% Jul29 Eur",
-    "price": 99.5,
+    "price": 99.61,
     "coupon": 3.35,
     "maturity": "01/07/2029"
   },
   {
     "isin": "IT0005584856",
     "name": "Btp Fx 3.85% Jul34 Eur",
-    "price": 98.13,
+    "price": 98.45,
     "coupon": 3.85,
     "maturity": "01/07/2034"
   },
   {
     "isin": "IT0005588881",
     "name": "Btpi Fx May36 Eur",
-    "price": 94.95,
+    "price": 95.21,
     "coupon": 1.8,
     "maturity": "15/05/2036"
   },
   {
     "isin": "IT0005594483",
     "name": "Btp Valore Sc Mg30 Eur",
-    "price": 100.0,
+    "price": 100.03,
     "coupon": 1.675,
     "maturity": "14/05/2030"
   },
   {
     "isin": "IT0005595803",
     "name": "Btp Fx 3.45% Jul31 Eur",
-    "price": 98.52,
+    "price": 98.73,
     "coupon": 3.45,
     "maturity": "15/07/2031"
   },
   {
     "isin": "IT0005596470",
     "name": "Btp Green Fx 4.05% Oct37 Eur",
-    "price": 96.98,
+    "price": 97.31,
     "coupon": 4.05,
     "maturity": "30/10/2037"
   },
@@ -1220,14 +1220,14 @@
   {
     "isin": "IT0005607970",
     "name": "Btp Fx 3.85% Feb35 Eur",
-    "price": 97.57,
+    "price": 97.93,
     "coupon": 3.85,
     "maturity": "01/02/2035"
   },
   {
     "isin": "IT0005611055",
     "name": "Btp Fx 3% Oct29 Eur",
-    "price": 98.43,
+    "price": 98.53,
     "coupon": 3.0,
     "maturity": "01/10/2029"
   },
@@ -1241,21 +1241,21 @@
   {
     "isin": "IT0005611741",
     "name": "Btp Fx 4.3% Oct54 Eur",
-    "price": 90.99,
+    "price": 91.64,
     "coupon": 4.3,
     "maturity": "01/10/2054"
   },
   {
     "isin": "IT0005619546",
     "name": "Btp Fx 3.15% Nov31 Eur",
-    "price": 96.91,
+    "price": 97.11,
     "coupon": 3.15,
     "maturity": "15/11/2031"
   },
   {
     "isin": "IT0005622128",
     "name": "Btp Fx 2.7% Oct27 Eur",
-    "price": 99.57,
+    "price": 99.565,
     "coupon": 2.7,
     "maturity": "15/10/2027"
   },
@@ -1276,42 +1276,42 @@
   {
     "isin": "IT0005631590",
     "name": "Btp Fx 3.65% Aug35 Eur",
-    "price": 95.72,
+    "price": 96.07,
     "coupon": 3.65,
     "maturity": "01/08/2035"
   },
   {
     "isin": "IT0005631608",
     "name": "Btp Green Fx 4.1% Apr46 Eur",
-    "price": 91.67,
+    "price": 92.27,
     "coupon": 4.1,
     "maturity": "30/04/2046"
   },
   {
     "isin": "IT0005633794",
     "name": "Btp Fx 2.55% Feb27 Eur",
-    "price": 99.916,
+    "price": 99.919,
     "coupon": 2.55,
     "maturity": "25/02/2027"
   },
   {
     "isin": "IT0005634800",
     "name": "Btp Piu' Sc Fb33 Eur",
-    "price": 95.43,
+    "price": 95.81,
     "coupon": 1.425,
     "maturity": "25/02/2033"
   },
   {
     "isin": "IT0005635583",
     "name": "Btp Fx 3.85% Oct40 Eur",
-    "price": 92.55,
+    "price": 93.01,
     "coupon": 3.85,
     "maturity": "01/10/2040"
   },
   {
     "isin": "IT0005637399",
     "name": "Btp Fx 2.95% Jul30 Eur",
-    "price": 97.51,
+    "price": 97.63,
     "coupon": 2.95,
     "maturity": "01/07/2030"
   },
@@ -1325,91 +1325,91 @@
   {
     "isin": "IT0005641029",
     "name": "Btp Fx 2.65% Jun28 Eur",
-    "price": 98.96,
+    "price": 98.98,
     "coupon": 2.65,
     "maturity": "15/06/2028"
   },
   {
     "isin": "IT0005647265",
     "name": "Btp Fx 3.25% Jul32 Eur",
-    "price": 96.53,
+    "price": 96.8,
     "coupon": 3.25,
     "maturity": "15/07/2032"
   },
   {
     "isin": "IT0005647273",
     "name": "Btpi Fx May56 Eur",
-    "price": 92.33,
+    "price": 93.49,
     "coupon": 2.55,
     "maturity": "15/05/2056"
   },
   {
     "isin": "IT0005648149",
     "name": "Btp Fx 3.6% Oct35 Eur",
-    "price": 95.08,
+    "price": 95.52,
     "coupon": 3.6,
     "maturity": "01/10/2035"
   },
   {
     "isin": "IT0005648255",
     "name": "Btp Italia Jun32 Eur",
-    "price": 101.85,
+    "price": 102.13,
     "coupon": 1.85,
     "maturity": "04/06/2032"
   },
   {
     "isin": "IT0005654642",
     "name": "Btp Fx 2.7% Oct30 Eur",
-    "price": 96.33,
+    "price": 96.47,
     "coupon": 2.7,
     "maturity": "01/10/2030"
   },
   {
     "isin": "IT0005657330",
     "name": "Btp Fx 2.1% Aug27 Eur",
-    "price": 99.236,
+    "price": 99.242,
     "coupon": 2.1,
     "maturity": "26/08/2027"
   },
   {
     "isin": "IT0005657348",
     "name": "Btpi Fx Aug31 Eur",
-    "price": 96.95,
+    "price": 97.13,
     "coupon": 1.1,
     "maturity": "15/08/2031"
   },
   {
     "isin": "IT0005660052",
     "name": "Btp Fx 2.35% Jan29 Eur",
-    "price": 97.72,
+    "price": 97.75,
     "coupon": 2.35,
     "maturity": "15/01/2029"
   },
   {
     "isin": "IT0005668220",
     "name": "Btp Fx 3.25% Nov32 Eur",
-    "price": 96.25,
+    "price": 96.43,
     "coupon": 3.25,
     "maturity": "15/11/2032"
   },
   {
     "isin": "IT0005668238",
     "name": "Btp Fx 4.65% Oct55 Eur",
-    "price": 95.67,
+    "price": 96.41,
     "coupon": 4.65,
     "maturity": "01/10/2055"
   },
   {
     "isin": "IT0005671273",
     "name": "Btp Fx 2.85% Feb31 Eur",
-    "price": 96.41,
+    "price": 96.56,
     "coupon": 2.85,
     "maturity": "01/02/2031"
   },
   {
     "isin": "IT0005672024",
     "name": "Btp Valore Sc Ot32 Eur",
-    "price": 95.27,
+    "price": 95.43,
     "coupon": 1.3,
     "maturity": "28/10/2032"
   },
@@ -1430,7 +1430,7 @@
   {
     "isin": "IT0005676504",
     "name": "Btp Fx 3.45% Feb36 Eur",
-    "price": 93.7,
+    "price": 94.1,
     "coupon": 3.45,
     "maturity": "01/02/2036"
   },
@@ -1444,14 +1444,14 @@
   {
     "isin": "IT0005689960",
     "name": "Btp Fx 2.4% Mar29 Eur",
-    "price": 97.6,
+    "price": 97.67,
     "coupon": 2.4,
     "maturity": "15/03/2029"
   },
   {
     "isin": "IT0005689994",
     "name": "Btp Fx 3.15% Mar33 Eur",
-    "price": 95.27,
+    "price": 95.46,
     "coupon": 3.15,
     "maturity": "15/03/2033"
   },
@@ -1465,112 +1465,112 @@
   {
     "isin": "IT0005694630",
     "name": "Btp Fx 3.95% Oct41 Eur",
-    "price": 92.58,
+    "price": 93.14,
     "coupon": 3.95,
     "maturity": "01/10/2041"
   },
   {
     "isin": "IT0005696338",
     "name": "Btp Valore Sc Mar32 Eur",
-    "price": 96.17,
+    "price": 96.42,
     "coupon": 1.3,
     "maturity": "10/03/2032"
   },
   {
     "isin": "IT0005704868",
     "name": "Btp Fx 3.3% Jun33 Eur",
-    "price": 95.72,
+    "price": 95.95,
     "coupon": 3.3,
     "maturity": "15/06/2033"
   },
   {
     "isin": "IT0005706285",
     "name": "Btp Fx 3.8% Jul36 Eur",
-    "price": 95.93,
+    "price": 96.34,
     "coupon": 3.8,
     "maturity": "01/07/2036"
   },
   {
     "isin": "IT0005706293",
     "name": "Btpi Fx Feb46 Eur",
-    "price": 91.48,
+    "price": 91.84,
     "coupon": 2.25,
     "maturity": "15/02/2046"
   },
   {
     "isin": "IT0005707614",
     "name": "Btp Fx 3.15% Jun31 Eur",
-    "price": 97.28,
+    "price": 97.45,
     "coupon": 3.15,
     "maturity": "01/06/2031"
   },
   {
     "isin": "IT0005713547",
     "name": "Btp Italia Si' Jun31 Eur",
-    "price": 100.25,
+    "price": 100.45,
     "coupon": 1.6,
     "maturity": "23/06/2031"
   },
   {
     "isin": "IT0005716839",
     "name": "Btp Fx 3% Sep29 Eur",
-    "price": 98.43,
+    "price": 98.51,
     "coupon": 3.0,
     "maturity": "15/09/2029"
   },
   {
     "isin": "IT0005722845",
     "name": "Btp Fx 3.35% Sep33 Eur",
-    "price": 95.7,
+    "price": 96.04,
     "coupon": 3.35,
     "maturity": "15/09/2033"
   },
   {
     "isin": "IT0005725160",
     "name": "Btpi Fx Feb37 Eur",
-    "price": 95.36,
+    "price": 95.61,
     "coupon": 2.0,
     "maturity": "15/02/2037"
   },
   {
     "isin": "IT0005729733",
     "name": "Btp Fx 3% Oct28 Eur",
-    "price": 99.19,
+    "price": 99.21,
     "coupon": 3.0,
     "maturity": "30/10/2028"
   },
   {
     "isin": "IT0005729931",
     "name": "Btp Fx 4% Oct36 Eur",
-    "price": 97.24,
+    "price": 97.64,
     "coupon": 4.0,
     "maturity": "01/10/2036"
   },
   {
     "isin": "IT0005733099",
     "name": "Btp Green Fx 4.4% Oct38 Eur",
-    "price": 99.2,
+    "price": 99.72,
     "coupon": 4.4,
     "maturity": "30/10/2038"
   },
   {
     "isin": "IT0005733636",
     "name": "Btp Fx 3.95% Feb32 Eur",
-    "price": 100.32,
+    "price": 100.51,
     "coupon": 2.6405,
     "maturity": "01/02/2032"
   },
   {
     "isin": "IT0005735201",
     "name": "Btp Valore Sc Oct31 Eur",
-    "price": 101.7,
+    "price": 101.66,
     "coupon": 1.875,
     "maturity": "27/10/2031"
   },
   {
     "isin": "IT0005735227",
     "name": "Btp Valore Insieme Oc Oct31 Eur",
-    "price": 101.93,
+    "price": 101.9,
     "coupon": 0.0,
     "maturity": "27/10/2031"
   }
