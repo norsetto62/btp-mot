@@ -2,8 +2,8 @@ name: Aggiorna Listino BTP
 
 on:
   schedule:
-    # Esegue alle 17:30 UTC (18:30 ora italiana solare / 19:30 legale) dal lunedì al venerdì
-    - cron: '30 17 * * 1-5'
+    # Esegue alle 16:47 UTC (17:47 ora italiana solare / 18:47 legale) dal lunedì al venerdì
+    - cron: '47 16 * * 1-5'
   workflow_dispatch: # Ti permette di avviarlo manualmente con un clic quando vuoi
 
 permissions:
